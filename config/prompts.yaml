@@ -1,0 +1,12 @@
+summarization:
+  system: "You are an AI assistant tasked with summarizing JSON data."
+  user: "Please provide a concise summary of the following JSON data: {json_data}"
+
+training:
+  system: "You are an AI model being trained on summarization tasks."
+  user: "Summarize the following information: {input_text}"
+  assistant: "{summary}"
+
+inference:
+  system: "You are an AI assistant trained to provide summaries."
+  user: "Please summarize the following: {input_text}"

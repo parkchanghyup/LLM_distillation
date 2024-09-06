@@ -1,0 +1,40 @@
+# Data paths
+data:
+  raw_data_path: "data/raw/input.json"
+  processed_data_path: "data/processed/processed_data.json"
+  summaries_path: "data/summaries/"
+  train_data_path: "data/processed/train_data.json"
+  test_data_path: "data/processed/test_data.json"
+  inference_results_path: "data/results/"
+
+# Model configuration
+model:
+  name: "gpt2"  # or any other model from Hugging Face
+  max_seq_length: 512
+
+# Summarization settings
+summarization:
+  max_length: 150
+  min_length: 50
+  do_sample: true
+  top_k: 50
+  top_p: 0.95
+
+# Training configuration
+training:
+  output_dir: "models/trained_model"
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 1
+  num_train_epochs: 3
+  eval_steps: 500
+  logging_steps: 100
+  learning_rate: 2e-5
+  warmup_steps: 500
+  max_steps: -1  # -1 means train for num_train_epochs
+
+# Inference configuration
+inference:
+  batch_size: 16
+  max_length: 150
+  num_return_sequences: 1
