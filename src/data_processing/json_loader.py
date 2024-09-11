@@ -1,7 +1,7 @@
 import json
 import glob
 
-def load_json_files():
+def load_json_data():
     json_files = []
     for i in range(1, 5):
         json_files.extend(glob.glob(f'./data/group_{i}/*.json'))

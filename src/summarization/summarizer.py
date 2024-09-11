@@ -1,34 +1,42 @@
 from tqdm import tqdm
-from model.inference import generate_text
 from langchain.prompts import PromptTemplate
 
 
 def generate_text(model, tokenizer, user_message, config):
+    """Generate text using the provided model and tokenizer."""
     input_ids = tokenizer(user_message, return_tensors="pt").to(model.device)
-    outputs = model.generate(
-        input_ids,
-        max_new_tokens=config['max_new_tokens'],
-        eos_token_id=tokenizer.eos_token_id,
-        do_sample=config['do_sample'],
-        temperature=config['temperature'],
-        top_p=config['top_p'],
-        pad_token_id=tokenizer.eos_token_id
-    )
-    response = outputs[0][input_ids.shape[-1]:]
-    return tokenizer.decode(response, skip_special_tokens=True)
+    try:
+        outputs = model.generate(
+            input_ids,
+            max_new_tokens=config['generation']['max_new_tokens'],
+            do_sample=config['generation']['do_sample'],
+            temperature=config['generation']['temperature'],
+            top_p=config['generation']['top_p'],
+            eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.eos_token_id
+        )
+        response = outputs[0][input_ids.shape[-1]:]
+        return tokenizer.decode(response, skip_special_tokens=True)
+    except Exception as e:
+        print(f"Error generating text: {e}")
+        return ""
 
 
 def generate_summaries(docs, model, tokenizer, generate_prompt, config):
+    """Generate summaries for the provided documents."""
     summary_results = []
     use_docs = []
     prompt = PromptTemplate.from_template(generate_prompt)
 
-    for i in tqdm(range(len(docs))):
-        if len(docs[i]) > 2048:
+    for doc in tqdm(docs):
+        if len(tokenizer.encode(doc)) > config['data']['max_input_length']:
+            print(f"Skipping document with length "
+                  f"{len(tokenizer.encode(doc))} tokens")
             continue
-        prompt = prompt.format(docs[i])
-        gemma_summary = generate_text(model, tokenizer, prompt, config)
-        summary_results.append(gemma_summary)
-        use_docs.append(docs[i])
+        formatted_prompt = prompt.format(document=doc)
+        summary = generate_text(model, tokenizer, formatted_prompt, config)
+        if summary:
+            summary_results.append(summary)
+            use_docs.append(doc)
 
     return summary_results, use_docs

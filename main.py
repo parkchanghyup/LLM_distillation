@@ -1,8 +1,9 @@
 import argparse
 import yaml
 import json
+import csv
 from pathlib import Path
-
+import torch
 from src.data_processing.json_loader import load_json_data
 from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
@@ -16,18 +17,34 @@ def load_yaml(config_path):
 
 
 def summarize(config, prompts):
-    raw_data = load_json_data(config['data']['raw_data_path'])
-    generate_prompt = prompts['inference']['user']
-    model = AutoModelForCausalLM.from_pretrained(config['model']['name'])
-    tokenizer = AutoTokenizer.from_pretrained(config['model']['name'])
-    summaries = generate_summaries(raw_data, model, tokenizer, generate_prompt, config)
+    """Summarize documents and save results."""
+    try:
+        raw_data = load_json_data(config['data']['raw_data_path'])
+        generate_prompt = prompts['inference']['user']
 
-    summaries_path = Path(config['data']['summaries_path'])
-    summaries_path.mkdir(parents=True, exist_ok=True)
-    with open(summaries_path / 'summaries.json', 'w') as f:
-        json.dump(summaries, f)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(
+            config['model']['name']).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(config['model']['name'])
 
-    print("Summaries generated and saved successfully!")
+        summaries, original_docs = generate_summaries(
+            raw_data, model, tokenizer, generate_prompt, config)
+
+        summaries_path = Path(config['data']['summaries_path'])
+        summaries_path.mkdir(parents=True, exist_ok=True)
+
+        # Save as CSV
+        with open(summaries_path / 'summaries.csv', 'w', newline='',
+                  encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Original Document', 'Summary'])
+            for doc, summary in zip(original_docs, summaries):
+                writer.writerow([doc, summary])
+
+        print("Summaries generated and saved successfully as CSV!")
+    except Exception as e:
+        print(f"An error occurred during summarization: {e}")
+
 
 
 def train(config):
@@ -66,6 +83,7 @@ def infer(config):
 
 
 def main(args, config, prompts):
+    """Main function to run the summarization process."""
     if args.summarize:
         summarize(config, prompts)
     # elif args.train:
@@ -101,6 +119,10 @@ if __name__ == "__main__":
         help='Run inference'
     )
     args = parser.parse_args()
-    config = load_yaml(args.config)
-    prompts = load_yaml(args.prompts)
+
+    with open(args.config, 'r') as f:
+        config = yaml.safe_load(f)
+    with open(args.prompts, 'r') as f:
+        prompts = yaml.safe_load(f)
+
     main(args, config, prompts)
