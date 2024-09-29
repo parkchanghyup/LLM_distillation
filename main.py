@@ -1,6 +1,4 @@
 import argparse
-import yaml
-import json
 import csv
 from pathlib import Path
 import torch
@@ -8,50 +6,43 @@ from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
 from src.model.inference import run_inference, load_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import glob
+from utils.file_utils import load_yaml, load_json, load_documents
 
-def load_yaml(yaml_path):
-    with open(yaml_path, 'r') as file:
-        return yaml.safe_load(file)
 
-def load_json(json_path):
-    with open(json_path, 'r', encoding='utf-8') as file:
-        return json.load(file)
+def save_summaries(summaries_path, docs, summaries):
+    summaries_path = Path(summaries_path)
+    summaries_path.mkdir(parents=True, exist_ok=True)
+    with open(summaries_path / 'summaries.csv', 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Original Document', 'Summary'])
+        for doc, summary in zip(docs, summaries):
+            writer.writerow([doc, summary])
+    print("Summaries generated and saved successfully as CSV!")
+
+
+def setup_model(model_name, device):
+    model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def summarize(config, prompts):
     """Summarize documents and save results."""
-    docs = []
-    raw_data_path = config['data']['raw_data_path']
-    llm_model = config['model']['LLM']['name']
     try:
-        raw_data_path = glob.glob(raw_data_path)
-        for json_path in raw_data_path:
-            data = load_json(json_path)
-            docs = docs.append(data['paragraph'])
+        # Load documents
+        docs = load_documents(config['data']['raw_data_path'])
 
-        generate_prompt = prompts['inference']['user']
-
+        # Setup model
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = AutoModelForCausalLM.from_pretrained(
-            llm_model).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(llm_model)
+        model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
-        summaries = generate_summaries(docs, model, tokenizer,
-                                       generate_prompt, config)
+        # Generate summaries
+        generate_prompt = prompts['inference']['user']
+        summaries = generate_summaries(docs, model, tokenizer, generate_prompt, config)
 
-        summaries_path = Path(config['data']['summaries_path'])
-        summaries_path.mkdir(parents=True, exist_ok=True)
+        # Save summaries
+        save_summaries(config['data']['summaries_path'], docs, summaries)
 
-        # Save as CSV
-        with open(summaries_path / 'summaries.csv', 'w', newline='',
-                  encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['Original Document', 'Summary'])
-            for doc, summary in zip(docs, summaries):
-                writer.writerow([doc, summary])
-
-        print("Summaries generated and saved successfully as CSV!")
     except Exception as e:
         print(f"An error occurred during summarization: {e}")
 
