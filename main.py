@@ -4,31 +4,41 @@ import json
 import csv
 from pathlib import Path
 import torch
-from src.data_processing.json_loader import load_json_data
 from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
 from src.model.inference import run_inference, load_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import glob
 
-
-def load_yaml(config_path):
-    with open(config_path, 'r') as file:
+def load_yaml(yaml_path):
+    with open(yaml_path, 'r') as file:
         return yaml.safe_load(file)
+
+def load_json(json_path):
+    with open(json_path, 'r', encoding='utf-8') as file:
+        return json.load(file)
 
 
 def summarize(config, prompts):
     """Summarize documents and save results."""
+    docs = []
+    raw_data_path = config['data']['raw_data_path']
+    llm_model = config['model']['LLM']['name']
     try:
-        raw_data = load_json_data(config['data']['raw_data_path'])
+        raw_data_path = glob.glob(raw_data_path)
+        for json_path in raw_data_path:
+            data = load_json(json_path)
+            docs = docs.append(data['paragraph'])
+
         generate_prompt = prompts['inference']['user']
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
-            config['model']['name']).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(config['model']['name'])
+            llm_model).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(llm_model)
 
-        summaries, original_docs = generate_summaries(
-            raw_data, model, tokenizer, generate_prompt, config)
+        summaries = generate_summaries(docs, model, tokenizer,
+                                       generate_prompt, config)
 
         summaries_path = Path(config['data']['summaries_path'])
         summaries_path.mkdir(parents=True, exist_ok=True)
@@ -38,7 +48,7 @@ def summarize(config, prompts):
                   encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['Original Document', 'Summary'])
-            for doc, summary in zip(original_docs, summaries):
+            for doc, summary in zip(docs, summaries):
                 writer.writerow([doc, summary])
 
         print("Summaries generated and saved successfully as CSV!")
@@ -71,7 +81,7 @@ def train(config):
 
 def infer(config):
     trained_model = load_model(config['model']['path'])
-    test_data = load_json_data(config['data']['test_data_path'])
+    test_data = load_json_data(config['test_data_path'])
     inference_results = run_inference(trained_model, test_data, config['inference'])
 
     inference_results_path = Path(config['data']['inference_results_path'])

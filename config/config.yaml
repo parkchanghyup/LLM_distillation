@@ -1,6 +1,6 @@
 # Data paths
 data:
-  raw_data_path: "data/raw/input.json"
+  raw_data_path: "data/raw/*.json"
   processed_data_path: "data/processed/processed_data.json"
   summaries_path: "data/summaries/"
   train_data_path: "data/processed/train_data.json"
