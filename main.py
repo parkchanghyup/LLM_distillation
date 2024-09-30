@@ -1,5 +1,6 @@
 import argparse
 import csv
+import yaml
 from pathlib import Path
 import torch
 from src.summarization.summarizer import generate_summaries
@@ -28,23 +29,23 @@ def setup_model(model_name, device):
 
 def summarize(config, prompts):
     """Summarize documents and save results."""
-    try:
+    # try:
         # Load documents
-        docs = load_documents(config['data']['raw_data_path'])
+    docs = load_documents(config['data']['raw_data_path'])
 
-        # Setup model
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model, tokenizer = setup_model(config['model']['LLM']['name'], device)
+    # Setup model
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
-        # Generate summaries
-        generate_prompt = prompts['inference']['user']
-        summaries = generate_summaries(docs, model, tokenizer, generate_prompt, config)
+    # Generate summaries
+    generate_prompt = prompts['inference']['user']
+    summaries = generate_summaries(docs, model, tokenizer, generate_prompt, config)
 
-        # Save summaries
-        save_summaries(config['data']['summaries_path'], docs, summaries)
+    # Save summaries
+    save_summaries(config['data']['summaries_path'], docs, summaries)
 
-    except Exception as e:
-        print(f"An error occurred during summarization: {e}")
+    # except Exception as e:
+    #     print(f"An error occurred during summarization: {e}")
 
 
 
@@ -121,9 +122,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    with open(args.config, 'r') as f:
+    with open(args.config, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
-    with open(args.prompts, 'r') as f:
+    with open(args.prompts, 'r', encoding='utf-8') as f:
         prompts = yaml.safe_load(f)
 
     main(args, config, prompts)
