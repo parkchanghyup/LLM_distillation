@@ -6,20 +6,22 @@ data:
   train_data_path: "data/processed/train_data.json"
   test_data_path: "data/processed/test_data.json"
   inference_results_path: "data/results/"
+  max_input_length: 2000
 
 # Model configuration
 model:
   LLM:
-    name: "gemma-2-27b-it"  # or any other model from Hugging Face
+    name: "facebook/opt-125m"  # or any other model from Hugging Face
     max_seq_length: 2048
   sLLM:
-    name: "gemma-2-2b-it"
+    name: "google/gemma-2-2b-it"
     max_seq_length: 2048
 
 # Summarization settings
 summarization:
-  max_length: 150
+  max_length: 300
   min_length: 50
+  temperature: 0.4
   do_sample: true
   top_k: 50
   top_p: 0.95
