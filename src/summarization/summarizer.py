@@ -4,23 +4,27 @@ from langchain.prompts import PromptTemplate
 
 def generate_text(model, tokenizer, user_message, config):
     """Generate text using the provided model and tokenizer."""
-    input_ids = tokenizer(user_message, return_tensors="pt").to(model.device)
-    # try:
-    outputs = model.generate(
-        input_ids,
-        max_new_tokens=config['summarization']['max_length'],
-        temperature=config['summarization']['temperature'],
-        top_p=config['summarization']['top_p'],
-        top_k=config['summarization']['top_k'],
-        do_sample=config['summarization']['do_sample'],
-        eos_token_id=tokenizer.eos_token_id,
-        pad_token_id=tokenizer.eos_token_id
-    )
-    response = outputs[0][input_ids.shape[-1]:]
-    return tokenizer.decode(response, skip_special_tokens=True)
-    # except Exception as e:
-    #     print(f"Error generating text: {e}")
-    #     return ""
+    inputs = tokenizer(user_message, return_tensors="pt")
+    input_ids = inputs.input_ids.to(model.device)
+    attention_mask = inputs.attention_mask.to(model.device)
+
+    try:
+        outputs = model.generate(
+            input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=config['summarization']['max_length'],
+            temperature=config['summarization']['temperature'],
+            top_p=config['summarization']['top_p'],
+            top_k=config['summarization']['top_k'],
+            do_sample=config['summarization']['do_sample'],
+            eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.eos_token_id
+        )
+        response = outputs[0][input_ids.shape[-1]:]
+        return tokenizer.decode(response, skip_special_tokens=True)
+    except Exception as e:
+        print(f"Error generating text: {e}")
+        return ""
 
 
 def generate_summaries(docs, model, tokenizer, generate_prompt, config):
