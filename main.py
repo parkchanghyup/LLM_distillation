@@ -10,15 +10,24 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils.file_utils import load_yaml, load_json, load_documents
 
 
+import pandas as pd
+from pathlib import Path
+
 def save_summaries(summaries_path, docs, summaries):
     summaries_path = Path(summaries_path)
     summaries_path.mkdir(parents=True, exist_ok=True)
-    with open(summaries_path / 'summaries.csv', 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Original Document', 'Summary'])
-        for doc, summary in zip(docs, summaries):
-            writer.writerow([doc, summary])
+    
+    # 데이터프레임 생성
+    df = pd.DataFrame({
+        'Original Document': docs,
+        'Summary': summaries
+    })
+    
+    # CSV 파일로 저장 (UTF-8 인코딩)
+    df.to_csv(summaries_path / 'summaries.csv', index=False, encoding='utf-8-sig')
+    
     print("Summaries generated and saved successfully as CSV!")
+
 
 
 def setup_model(model_name, device):
@@ -39,10 +48,10 @@ def summarize(config, prompts):
 
     # Generate summaries
     generate_prompt = prompts['inference']['user']
-    summaries = generate_summaries(docs, model, tokenizer, generate_prompt, config)
+    summary_results, use_docs = generate_summaries(docs, model, tokenizer, generate_prompt, config)
 
     # Save summaries
-    save_summaries(config['data']['summaries_path'], docs, summaries)
+    save_summaries(config['data']['summaries_path'], use_docs, summary_results)
 
     # except Exception as e:
     #     print(f"An error occurred during summarization: {e}")
