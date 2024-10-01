@@ -1,10 +1,8 @@
 # Data paths
 data:
   raw_data_path: "data/raw/*.json"
-  processed_data_path: "data/processed/processed_data.json"
   summaries_path: "data/summaries/"
   train_data_path: "data/processed/train_data.json"
-  test_data_path: "data/processed/test_data.json"
   inference_results_path: "data/results/"
   max_input_length: 2000
 
@@ -37,7 +35,7 @@ training:
   logging_steps: 100
   learning_rate: 2e-5
   warmup_steps: 500
-  max_steps: -1  # -1 means train for num_train_epochs
+  test_size: 0.2
 
 # Inference configuration
 inference:

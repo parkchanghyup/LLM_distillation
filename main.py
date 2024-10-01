@@ -1,5 +1,4 @@
 import argparse
-import csv
 import yaml
 from pathlib import Path
 import torch
@@ -7,8 +6,7 @@ from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
 from src.model.inference import run_inference, load_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from utils.file_utils import load_yaml, load_json, load_documents
-
+from utils.file_utils import load_documents, load_train_dataset
 
 import pandas as pd
 from pathlib import Path
@@ -19,7 +17,7 @@ def save_summaries(summaries_path, docs, summaries):
     
     # 데이터프레임 생성
     df = pd.DataFrame({
-        'Original Document': docs,
+        'Document': docs,
         'Summary': summaries
     })
     
@@ -38,8 +36,8 @@ def setup_model(model_name, device):
 
 def summarize(config, prompts):
     """Summarize documents and save results."""
-    # try:
-        # Load documents
+
+    # Load documents
     docs = load_documents(config['data']['raw_data_path'])
 
     # Setup model
@@ -53,30 +51,21 @@ def summarize(config, prompts):
     # Save summaries
     save_summaries(config['data']['summaries_path'], use_docs, summary_results)
 
-    # except Exception as e:
-    #     print(f"An error occurred during summarization: {e}")
-
 
 
 def train(config):
     # Load the model and tokenizer
-    model = AutoModelForCausalLM.from_pretrained(config['model']['name'])
-    tokenizer = AutoTokenizer.from_pretrained(config['model']['name'])
+    model = AutoModelForCausalLM.from_pretrained(config['model']['sLLM']['name'])
+    tokenizer = AutoTokenizer.from_pretrained(config['model']['sLLM']['name'])
 
     # Load and preprocess the dataset
-    dataset = load_dataset(
-        'json',
-        data_files={
-            'train': config['data']['train_data_path'],
-            'test': config['data']['test_data_path']
-        }
-    )
+    train_dataset, valid_dataset = load_train_dataset(config['data']['summaries_path'] + '/' + 'summaries.csv', config['training']['test_size'])
 
     # Preprocess the dataset if needed
     # This step depends on your specific preprocessing needs
 
     # Call the train_model function
-    train_model(model, tokenizer, dataset, config)
+    train_model(model, tokenizer, train_dataset, valid_dataset, config)
     print("Model trained successfully!")
 
 

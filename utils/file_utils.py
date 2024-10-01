@@ -1,6 +1,8 @@
 import yaml
 import json
 import glob
+import pandas as pd
+from datasets import Dataset
 
 def load_yaml(yaml_path):
     try:
@@ -31,3 +33,17 @@ def load_documents(raw_data_path):
             raise KeyError(f"'paragraph' key not found in JSON file: {json_path}")
         docs.append(data['paragraph'])
     return docs
+
+
+def load_train_dataset(summarize_data_path, test_size):
+    # CSV 파일 로드
+    df = pd.read_csv(summarize_data_path)
+
+    # Dataset 객체로 변환
+    dataset = Dataset.from_pandas(df)
+
+    # Dataset의 train_test_split 메서드를 사용하여 분할
+    split_dataset = dataset.train_test_split(test_size=test_size, seed=42)
+
+    return split_dataset['train'], split_dataset['test']
+
