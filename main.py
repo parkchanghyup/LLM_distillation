@@ -45,7 +45,7 @@ def summarize(config, prompts):
     model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
     # Generate summaries
-    generate_prompt = prompts['inference']['user']
+    generate_prompt = prompts['inference']
     summary_results, use_docs = generate_summaries(docs, model, tokenizer, generate_prompt, config)
 
     # Save summaries
@@ -53,16 +53,13 @@ def summarize(config, prompts):
 
 
 
-def train(config):
+def train(config, prompt):
     # Load the model and tokenizer
     model = AutoModelForCausalLM.from_pretrained(config['model']['sLLM']['name'])
     tokenizer = AutoTokenizer.from_pretrained(config['model']['sLLM']['name'])
-
+    train_prompt = prompt['train']
     # Load and preprocess the dataset
-    train_dataset, valid_dataset = load_train_dataset(config['data']['summaries_path'] + '/' + 'summaries.csv', config['training']['test_size'])
-
-    # Preprocess the dataset if needed
-    # This step depends on your specific preprocessing needs
+    train_dataset, valid_dataset = load_train_dataset(config['data']['summaries_path'] + '/' + 'summaries.csv', config['training']['test_size'], train_prompt)
 
     # Call the train_model function
     train_model(model, tokenizer, train_dataset, valid_dataset, config)
@@ -86,10 +83,10 @@ def main(args, config, prompts):
     """Main function to run the summarization process."""
     if args.summarize:
         summarize(config, prompts)
-    # elif args.train:
-    #     train(config)
-    # elif args.infer:
-    #     infer(config)
+    elif args.train:
+        train(config, prompts)
+    elif args.infer:
+        infer(config, prompts)
     else:
         print("Please specify an action: --summarize, --train, or --infer")
 

@@ -3,6 +3,7 @@ import json
 import glob
 import pandas as pd
 from datasets import Dataset
+from langchain.prompts import PromptTemplate
 
 def load_yaml(yaml_path):
     try:
@@ -35,12 +36,20 @@ def load_documents(raw_data_path):
     return docs
 
 
-def load_train_dataset(summarize_data_path, test_size):
+def load_train_dataset(summarize_data_path, test_size, train_prompt):
     # CSV 파일 로드
     df = pd.read_csv(summarize_data_path)
+    prompt = PromptTemplate.from_template(train_prompt)
+    texts = []
+    for i in range(len(df)):
+        document = df['document'][i]
+        summary = df['sumaization'][i]  # 'summarization'의 오타로 보입니다. 필요시 수정해주세요.
 
-    # Dataset 객체로 변환
-    dataset = Dataset.from_pandas(df)
+        text = prompt.format(document=document, summary=summary)
+        texts.append(text)
+
+    # texts 리스트를 Dataset 객체로 변환
+    dataset = Dataset.from_dict({"text": texts})
 
     # Dataset의 train_test_split 메서드를 사용하여 분할
     split_dataset = dataset.train_test_split(test_size=test_size, seed=42)
