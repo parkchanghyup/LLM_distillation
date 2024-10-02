@@ -53,9 +53,6 @@ def train_model(model, tokenizer, train_dataset, test_dataset, config):
 
     trainer.train()
 
-    print(f"Best model saved at: {trainer.best_model_path}")
-    print(f"Best eval loss: {trainer.best_eval_loss:.4f}")
-
     # 최종 모델 저장
     final_model_path = os.path.join(config["training"]["output_dir"], "final_model")
     trainer.save_model(final_model_path)
