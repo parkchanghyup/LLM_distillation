@@ -1,8 +1,9 @@
-from transformers import TrainingArguments, Trainer
+from transformers import TrainingArguments
+from trl import SFTTrainer
 import os
 
 
-class CustomTrainer(Trainer):
+class CustomTrainer(SFTTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.best_eval_loss = float('inf')
@@ -23,7 +24,6 @@ class CustomTrainer(Trainer):
 
 def train_model(model, tokenizer, train_dataset, test_dataset, config):
 
-
     training_args = TrainingArguments(
         output_dir=config["training"]["output_dir"],
         per_device_train_batch_size=config["training"]["per_device_train_batch_size"],
@@ -33,18 +33,22 @@ def train_model(model, tokenizer, train_dataset, test_dataset, config):
         evaluation_strategy="steps",
         eval_steps=config["training"]["eval_steps"],
         logging_steps=config["training"]["logging_steps"],
-        learning_rate=config["training"]["learning_rate"],
+        learning_rate=float(config["training"]["learning_rate"]),
         warmup_steps=config["training"]["warmup_steps"],
-        save_strategy="no",  # 자동 저장을 비활성화
+        save_strategy="no",  # 자동 저장을 비활성화,
+
     )
 
-    trainer = CustomTrainer(
+
+    trainer = SFTTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
         tokenizer=tokenizer,
-        max_seq_length=config["model"]["max_seq_length"],
+        dataset_text_field='text',
+        max_seq_length = config['model']['sLLM']['max_seq_length'],
+        packing=False
     )
 
     trainer.train()
