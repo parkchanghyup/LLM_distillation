@@ -17,8 +17,8 @@ def save_summaries(summaries_path, docs, summaries):
     
     # 데이터프레임 생성
     df = pd.DataFrame({
-        'Document': docs,
-        'Summary': summaries
+        'document': docs,
+        'summary': summaries
     })
     
     # CSV 파일로 저장 (UTF-8 인코딩)
