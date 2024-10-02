@@ -12,7 +12,7 @@ model:
     name: "facebook/opt-125m"  # or any other model from Hugging Face
     max_seq_length: 2048
   sLLM:
-    name: "google/gemma-2-2b-it"
+    name: "facebook/opt-125m"
     max_seq_length: 2048
 
 # Summarization settings

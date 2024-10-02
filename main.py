@@ -1,12 +1,11 @@
 import argparse
 import yaml
-from pathlib import Path
 import torch
 from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
 from src.model.inference import run_inference, load_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from utils.file_utils import load_documents, load_train_dataset
+from src.utils.file_utils import load_documents, load_train_dataset
 
 import pandas as pd
 from pathlib import Path
@@ -41,7 +40,8 @@ def summarize(config, prompts):
     docs = load_documents(config['data']['raw_data_path'])
 
     # Setup model
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = 'cuda'
     model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
     # Generate summaries

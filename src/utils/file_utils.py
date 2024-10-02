@@ -39,7 +39,7 @@ def load_documents(raw_data_path):
 
 def load_train_dataset(summarize_data_path, test_size, train_prompt):
     # CSV 파일 로드
-    df = pd.read_csv(summarize_data_path)
+    df = pd.read_csv(summarize_data_path, encoding='cp949')
 
 
     def format_chat_template(row):
