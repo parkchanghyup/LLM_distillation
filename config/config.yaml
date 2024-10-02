@@ -2,8 +2,7 @@
 data:
   raw_data_path: "data/raw/*.json"
   summaries_path: "data/summaries/"
-  train_data_path: "data/processed/train_data.json"
-  inference_results_path: "data/results/"
+  test_data_path: "data/test_data.json"
   max_input_length: 2000
 
 # Model configuration
@@ -37,8 +36,3 @@ training:
   warmup_steps: 500
   test_size: 0.2
 
-# Inference configuration
-inference:
-  batch_size: 16
-  max_length: 150
-  num_return_sequences: 1

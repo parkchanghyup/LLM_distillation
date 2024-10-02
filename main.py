@@ -3,12 +3,13 @@ import yaml
 import torch
 from src.summarization.summarizer import generate_summaries
 from src.model.trainer import train_model
-from src.model.inference import run_inference, load_model
+from src.model.inference import run_inference
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from src.utils.file_utils import load_documents, load_train_dataset
+from src.utils.file_utils import load_documents, load_train_dataset, load_json
 
 import pandas as pd
 from pathlib import Path
+import os
 
 def save_summaries(summaries_path, docs, summaries):
     summaries_path = Path(summaries_path)
@@ -40,8 +41,7 @@ def summarize(config, prompts):
     docs = load_documents(config['data']['raw_data_path'])
 
     # Setup model
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = 'cuda'
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
     # Generate summaries
@@ -55,8 +55,9 @@ def summarize(config, prompts):
 
 def train(config, prompt):
     # Load the model and tokenizer
-    model = AutoModelForCausalLM.from_pretrained(config['model']['sLLM']['name'])
-    tokenizer = AutoTokenizer.from_pretrained(config['model']['sLLM']['name'])
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, tokenizer = setup_model(config['model']['sLLM']['name'], device)
+
     train_prompt = prompt['train']
     # Load and preprocess the dataset
     train_dataset, valid_dataset = load_train_dataset(config['data']['summaries_path'] + '/' + 'summaries.csv', config['training']['test_size'], train_prompt)
@@ -66,17 +67,20 @@ def train(config, prompt):
     print("Model trained successfully!")
 
 
-def infer(config):
-    trained_model = load_model(config['model']['path'])
-    test_data = load_json_data(config['test_data_path'])
-    inference_results = run_inference(trained_model, test_data, config['inference'])
+def infer(config, prompts):
+    pretrained_model = os.path.join(config["training"]["output_dir"], "final_model")
+    generate_prompt = prompts['inference']
 
-    inference_results_path = Path(config['data']['inference_results_path'])
-    inference_results_path.mkdir(parents=True, exist_ok=True)
-    with open(inference_results_path / 'inference_results.json', 'w') as f:
-        json.dump(inference_results, f)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, tokenizer = setup_model(pretrained_model, device)
+
+    test_document = load_json(config['data']['test_data_path'])
+    inference_results = run_inference(model, tokenizer, test_document, generate_prompt, config['summarization'])
 
     print("Inference completed and results saved successfully!")
+    print('-'*30)
+
+    print(inference_results)
 
 
 def main(args, config, prompts):

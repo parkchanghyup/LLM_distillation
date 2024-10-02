@@ -3,7 +3,6 @@ import json
 import glob
 import pandas as pd
 from datasets import Dataset
-from langchain.prompts import PromptTemplate
 
 def load_yaml(yaml_path):
     try:
