@@ -1,35 +1,46 @@
-import torch
 from langchain.prompts import PromptTemplate
-from typing import Any, Dict
+import torch
+from transformers import pipeline
+from typing import Dict, Any
 
-def generate_text(model: Any, tokenizer: Any, user_message: str, config: Dict[str, Any]) -> str:
+
+def generate_text(model: Any, tokenizer: Any, formatted_prompt: str, config: Dict[str, Any]) -> str:
     """
-    Generate text using the provided model and tokenizer.
+    Generate text using the provided model and tokenizer with transformers pipeline.
 
     Args:
         model (Any): The language model.
         tokenizer (Any): The tokenizer for the model.
-        user_message (str): The input message to generate text from.
+        formatted_prompt (str): The input message to generate text from.
         config (Dict[str, Any]): Configuration parameters for text generation.
 
     Returns:
         str: The generated text.
     """
-    input_ids = tokenizer(user_message, return_tensors="pt").to(model.device)
+    try:
+        # pipeline 생성 (미리 로드된 모델과 토크나이저 사용)
+        generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
 
-    outputs = model.generate(
-        input_ids.input_ids,
-        max_new_tokens=config['max_length'],
-        temperature=config['temperature'],
-        top_p=config['top_p'],
-        top_k=config['top_k'],
-        do_sample=config['do_sample'],
-        eos_token_id=tokenizer.eos_token_id,
-        pad_token_id=tokenizer.eos_token_id
-    )
+        # 텍스트 생성
+        outputs = generator(
+            formatted_prompt,
+            max_new_tokens=config['max_length'],
+            temperature=config['temperature'],
+            top_p=config['top_p'],
+            top_k=config['top_k'],
+            do_sample=config['do_sample'],
+            num_return_sequences=1
+        )
 
-    response = outputs[0][input_ids.input_ids.shape[-1]:]
-    return tokenizer.decode(response, skip_special_tokens=True)
+        # 생성된 텍스트에서 입력 텍스트를 제외한 새로 생성된 부분만 추출
+        generated_text = outputs[0]['generated_text']
+        new_text = generated_text[len(formatted_prompt):]
+
+        return new_text.strip()
+    except Exception as e:
+        print(f"Error generating text: {e}")
+        return ""
+
 
 def run_inference(model: Any, tokenizer: Any, test_document: str, generate_prompt: str, config: Dict[str, Any]) -> Dict[str, str]:
     """

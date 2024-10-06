@@ -1,37 +1,40 @@
 from tqdm import tqdm
 from langchain.prompts import PromptTemplate
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple
+from typing import Dict, Any
+from transformers import pipeline
 
 
-def generate_text(model: Any, tokenizer: Any, user_message: str, config: Dict[str, Any]) -> str:
+def generate_text(model: Any, tokenizer: Any, formatted_prompt: str, config: Dict[str, Any]) -> str:
     """
-    Generate text using the provided model and tokenizer.
+    Generate text using the provided model and tokenizer with transformers pipeline.
 
     Args:
         model (Any): The language model.
         tokenizer (Any): The tokenizer for the model.
-        user_message (str): The input message to generate text from.
+        formatted_prompt (str): The input message to generate text from.
         config (Dict[str, Any]): Configuration parameters for text generation.
 
     Returns:
         str: The generated text.
     """
-    inputs = tokenizer(user_message, return_tensors="pt").to(model.device)
-
     try:
-        outputs = model.generate(
-            inputs.input_ids,
-            attention_mask=inputs.attention_mask,
-            max_new_tokens=config['summarization']['max_length'],
+        # pipeline 생성 (미리 로드된 모델과 토크나이저 사용)
+        generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
+
+        # 텍스트 생성
+        output = generator(
+            formatted_prompt,
+            max_length=config['summarization']['max_length'],
             temperature=config['summarization']['temperature'],
             top_p=config['summarization']['top_p'],
             top_k=config['summarization']['top_k'],
             do_sample=config['summarization']['do_sample'],
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.eos_token_id
+            num_return_sequences=1
         )
-        response = outputs[0][inputs.input_ids.shape[-1]:]
-        return tokenizer.decode(response, skip_special_tokens=True)
+
+        # 생성된 텍스트 반환
+        return output[0]['generated_text']
     except Exception as e:
         print(f"Error generating text: {e}")
         return ""
