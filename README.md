@@ -38,17 +38,17 @@
 
 1. **요약**:
    ```
-   python main.py --summarize --config config/config.yaml
+   python main.py --summarize
    ```
 
-2. **학습** (현재 구현 중):
+2. **학습**:
    ```
-   python main.py --train --config config/config.yaml
+   python main.py --train
    ```
 
-3. **학습 모델 테스트** (현재 구현 중):
+3. **학습 모델 테스트**:
    ```
-   python main.py --infer --config config/config.yaml
+   python main.py --infer
    ```
 
 ## Configuration
