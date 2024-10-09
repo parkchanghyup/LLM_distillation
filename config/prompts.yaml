@@ -1,5 +1,4 @@
-inference: "<bos><start_of_turn>user
-You are an AI assistant tasked with summarizing document.
+prompt: "You are an AI assistant tasked with summarizing document.
 주어지는 문서의 내용을 요약하는 요약문을 작성 해주세요. 요약된 결과는 아래와 같이 3줄로 요약 되어야합니다. 각 줄에 작성되는 내용은 50자를 넘어서는 안됩니다. 마크다운 언어를 사용하지 마세요.
 
 <요약 결과>
@@ -8,20 +7,4 @@ You are an AI assistant tasked with summarizing document.
 - 핵심 내용 3
 </요약 결과>
 
-문서 : {document}<end_of_turn>
-<start_of_turn>model
-"
-
-train: "<bos><start_of_turn>user
-You are an AI assistant tasked with summarizing document.
-주어지는 문서의 내용을 요약하는 요약문을 작성 해주세요. 요약된 결과는 아래와 같이 3줄로 요약 되어야합니다. 각 줄에 작성되는 내용은 50자를 넘어서는 안됩니다. 마크다운 언어를 사용하지 마세요.
-
-<요약 결과>
-- 핵심 내용 1
-- 핵심 내용 2
-- 핵심 내용 3
-</요약 결과>
-
-문서 : {}<end_of_turn>
-<start_of_turn>model
-{}<end_of_turn><eos>"
+문서 : {document}"

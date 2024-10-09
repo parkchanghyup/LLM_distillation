@@ -84,26 +84,32 @@ def load_documents(raw_data_path: str) -> List[str]:
     return docs
 
 
-def load_train_dataset(summarize_data_path: str, test_size: float, train_prompt: str) -> Tuple[Dataset, Dataset]:
+def load_train_dataset(tokenizer, summarize_data_path: str, test_size: float, generate_prompt: str) -> Tuple[Dataset, Dataset]:
     """
     Load and preprocess the training dataset from a CSV file.
 
     Args:
+        tokenizer (object): Tokenizer object.
         summarize_data_path (str): Path to the CSV file containing the dataset.
         test_size (float): Proportion of the dataset to include in the test split.
-        train_prompt (str): Template for formatting the training data.
+        generate_prompt (str): Template for formatting the training data.
 
     Returns:
         Tuple[Dataset, Dataset]: Train and test datasets.
     """
-    df = pd.read_csv(summarize_data_path, encoding='cp949')
+    df = pd.read_csv(summarize_data_path)
 
     def format_chat_template(row):
-        row['text'] = train_prompt.format(row['document'], row['summary'])
+
+        messages = [
+            {"role": "user", "content": generate_prompt.format(document = row['document'])},
+            {"role": "model", "content": row['summary']}
+        ]
+        row['text'] = tokenizer.apply_chat_template(messages, tokenize=False)
         return row
 
     dataset = Dataset.from_pandas(df)
-    dataset = dataset.map(format_chat_template, num_proc=4)
+    dataset = dataset.map(format_chat_template)
 
     print(dataset['text'][3])  # Consider removing or making this optional
     split_dataset = dataset.train_test_split(test_size=test_size, seed=42)

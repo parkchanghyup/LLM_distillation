@@ -58,12 +58,12 @@ def summarize(config: dict, prompts: dict) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tokenizer = setup_model(config['model']['LLM']['name'], device)
 
-    generate_prompt = prompts['inference']
+    generate_prompt = prompts['prompt']
     summary_results, use_docs = generate_summaries(docs, model, tokenizer, generate_prompt, config)
     save_summaries(config['data']['summaries_path'], use_docs, summary_results)
 
 
-def train(config: dict, prompt: dict) -> None:
+def train(config: dict, prompts: dict) -> None:
     """
     Train the model using the provided configuration and prompt.
 
@@ -73,12 +73,13 @@ def train(config: dict, prompt: dict) -> None:
     """
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tokenizer = setup_model(config['model']['sLLM']['name'], device)
+    tokenizer.pad_token = tokenizer.eos_token
 
-    train_prompt = prompt['train']
-    train_dataset, valid_dataset = load_train_dataset(
+    generate_prompt = prompts['prompt']
+    train_dataset, valid_dataset = load_train_dataset(tokenizer,
         f"{config['data']['summaries_path']}/summaries.csv",
         config['training']['test_size'],
-        train_prompt
+        generate_prompt
     )
 
     train_model(model, tokenizer, train_dataset, valid_dataset, config)
@@ -94,12 +95,12 @@ def infer(config: dict, prompts: dict) -> None:
         prompts (dict): Prompts dictionary.
     """
     pretrained_model = os.path.join(config["training"]["output_dir"], "final_model")
-    generate_prompt = prompts['inference']
+    generate_prompt = prompts['prompt']
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tokenizer = setup_model(pretrained_model, device)
 
-    test_document = load_json(config['data']['test_data_path'])
+    test_document = load_json(config['data']['test_data_path'])['document']
     inference_results = run_inference(model, tokenizer, test_document, generate_prompt, config['summarization'])
 
     print("Inference completed and results saved successfully!")
