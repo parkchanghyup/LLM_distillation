@@ -87,7 +87,7 @@ def create_prompt_templates():
     ])
 
     return training_prompt_template, inference_prompt_template, dpo_prompt_template
-
+합
 
 # 학습용 프롬프트 생성 함수
 def generate_prompts(examples, tokenizer):
