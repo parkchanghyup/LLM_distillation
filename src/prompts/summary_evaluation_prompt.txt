@@ -71,7 +71,7 @@ key phrases
 - 답변에 중국어나 일본어가 포함되면 감점하세요.
 
 # 원문:
-{text}
+{docs}
 
 # LLM 생성 결과:
 {result}
