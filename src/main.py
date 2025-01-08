@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
-from data.data_loader import load_and_sample_data, save_results
-from data.preprocess import generate_summaries
+from data.data_loader import load_and_sample_data, generate_summaries, save_results
 
 
 def main():
