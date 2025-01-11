@@ -3,7 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 from google import genai
 from dotenv import load_dotenv
-from sklearn.model_selection import train_test_split  # 추가
+from sklearn.model_selection import train_test_split
+from data.data_loader import load_prompt_template, create_prompt_templates
 
 # .env 파일 로드 (프로젝트 루트 기준)
 load_dotenv()
@@ -19,23 +20,14 @@ BASE_PATH = '/Users/ariz1623/Desktop/github/LLM_distillation/data'
 
 def get_summary(text):
     """주어진 텍스트를 요약하고 주요 문구를 추출하는 함수"""
-    prompt = f"""Please summarize the documentation provided in 3 lines.
-    Also, please extract the top five key phrases. See template for the answer format.
-    The summary must be written in the same language as the body.
-    <template>
-    summary
-    - summarize 1
-    - summarize 2
-    - summarize 3
-    
-    key phrases
-    [key phrase1, key phrase2, key phrase3, key phrase4, key phrase5]
-    </template>
-    
-    docs:
-    {text}
-    """
-    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+
+    training_template, _, _ = create_prompt_templates()  # training_template만 사용
+
+    # LangChain 템플릿 포맷에 맞게 변환
+    formatted_prompt = training_template.format(docs=text)
+
+
+    response = client.models.generate_content(model=MODEL_NAME, contents=formatted_prompt)
     return response.text
 
 def main():
@@ -44,8 +36,7 @@ def main():
     
     # 데이터 로드 및 전처리
     df = pd.read_csv(os.path.join(BASE_PATH, 'raw/combined_filtered_data.csv'))
-    df['text'] = df['title'] + '\n' + df['paragraph']
-    
+
     # 무작위 샘플링
     df_sample = df.sample(n=DATA_NUM, random_state=323).reset_index(drop=True)
     
