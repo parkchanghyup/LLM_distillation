@@ -16,7 +16,7 @@ MODEL_NAME = os.environ.get("GEMINI_MODEL_NAME")
 client = genai.Client(api_key=API_KEY)
 
 # 데이터 경로 및 샘플 크기 설정
-BASE_PATH = '/Users/ariz1623/Desktop/github/LLM_distillation/data'
+BASE_PATH = '../data'
 
 def get_summary(text):
     """주어진 텍스트를 요약하고 주요 문구를 추출하는 함수"""
