@@ -79,12 +79,13 @@ def setup_trainer(
         args=training_args,
     )
 
-#TODO: 동적구현
 def get_latest_checkpoint(output_dir: Path) -> Optional[Path]:
     """가장 최근 체크포인트를 반환합니다."""
     checkpoints = list(output_dir.glob("checkpoint-*"))
-    return checkpoints[-1]
-
+    if not checkpoints:
+        logger.warning("체크포인트가 존재하지 않습니다.")
+        return None
+    return max(checkpoints, key=lambda x: int(x.name.split("-")[-1]))
 
 
 def main() :
