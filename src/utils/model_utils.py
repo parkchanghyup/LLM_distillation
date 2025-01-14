@@ -1,58 +1,96 @@
-from unsloth import FastLanguageModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel
-import torch
+# model_utils.py
+import logging
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
-def load_model(model_name="unsloth/Qwen2.5-1.5B-Instruct", max_seq_length=2048, dtype=None, load_in_4bit=False):
-    """Load the model and tokenizer"""
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_name,
-        max_seq_length=max_seq_length,
-        dtype=dtype,
-        load_in_4bit=load_in_4bit
-    )
+import yaml
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import get_peft_model, LoraConfig
+from unsloth import is_bfloat16_supported
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# 기존 model_utils.py 함수들 (가정)
+def load_model(model_name: str, max_seq_length: int) -> Tuple:
+    """모델과 토크나이저를 로드합니다."""
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer.model_max_length = max_seq_length
     return model, tokenizer
 
-def apply_peft_config(model, r=16, lora_alpha=16, target_modules=None, **kwargs):
-    """Apply PEFT (LoRA) configuration to the model"""
-    if target_modules is None:
-        target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-    
-    model = FastLanguageModel.get_peft_model(
-        model,
+
+def apply_peft_config(model, r: int, lora_alpha: int, random_state: int = 42):
+    """PEFT 설정을 모델에 적용합니다."""
+    peft_config = LoraConfig(
         r=r,
-        target_modules=target_modules,
         lora_alpha=lora_alpha,
-        lora_dropout=0,
+        target_modules=["q_proj", "v_proj"],
+        lora_dropout=0.05,
         bias="none",
-        use_gradient_checkpointing="unsloth",
-        random_state=3407,
-        use_rslora=False,
-        loftq_config=None,
-        **kwargs
+        task_type="CAUSAL_LM",
+        random_state=random_state,
     )
-    return model
+    return get_peft_model(model, peft_config)
 
-def merge_peft_model(base_model_name, peft_model_path, merged_model_path="./merged_model", dtype=torch.float16):
-    """Merge the PEFT model with the base model and save it"""
-    # 토크나이저 로드
-    tokenizer = AutoTokenizer.from_pretrained(peft_model_path)
 
-    # 기본 모델 로드
-    base_model = AutoModelForCausalLM.from_pretrained(
-        base_model_name,
-        torch_dtype=dtype,
-        device_map="auto"
-    )
-
-    # PEFT 모델 로드
-    model = PeftModel.from_pretrained(base_model, peft_model_path)
-
-    # LoRA 어댑터 병합 및 제거
-    merged_model = model.merge_and_unload()
-
-    # 병합된 모델 저장
+def merge_peft_model(base_model_name: str, peft_model_path: str, merged_model_path: str):
+    """PEFT 모델을 병합합니다."""
+    base_model = AutoModelForCausalLM.from_pretrained(base_model_name)
+    peft_model = get_peft_model(base_model, LoraConfig.from_pretrained(peft_model_path))
+    merged_model = peft_model.merge_and_unload()
     merged_model.save_pretrained(merged_model_path)
-    tokenizer.save_pretrained(merged_model_path)
-    print(f"Merged model saved to: {merged_model_path}")
-    return merged_model, tokenizer
+
+
+# common_utils.py에서 병합된 함수들
+def load_config(config_path: Path) -> Dict:
+    """설정 파일을 로드합니다."""
+    try:
+        with config_path.open("r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logger.error(f"설정 파일을 찾을 수 없습니다: {config_path}")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"YAML 파싱 에러: {e}")
+        raise
+
+
+def get_latest_checkpoint(output_dir: Path) -> Optional[Path]:
+    """가장 최근 체크포인트를 반환합니다."""
+    checkpoints = list(output_dir.glob("checkpoint-*"))
+    if not checkpoints:
+        logger.warning("체크포인트가 존재하지 않습니다.")
+        return None
+    return max(checkpoints, key=lambda x: int(x.name.split("-")[-1]))
+
+
+def setup_training_args(config: Dict, output_dir: Path) -> "TrainingArguments":
+    """TrainingArguments를 설정하고 반환합니다."""
+    from transformers import TrainingArguments
+
+    return TrainingArguments(
+        per_device_train_batch_size=config["training"]["batch_size"],
+        gradient_accumulation_steps=config["training"]["gradient_accumulation_steps"],
+        warmup_steps=config["training"]["warmup_steps"],
+        num_train_epochs=config["training"]["epochs"],
+        learning_rate=config["training"]["learning_rate"],
+        evaluation_strategy="steps",
+        eval_steps=config["training"]["eval_steps"],
+        fp16=not is_bfloat16_supported(),
+        bf16=is_bfloat16_supported(),
+        logging_steps=config["training"]["logging_steps"],
+        optim=config["training"]["optimizer"],
+        weight_decay=config["training"]["weight_decay"],
+        lr_scheduler_type=config["training"]["lr_scheduler_type"],
+        seed=config["training"]["seed"],
+        output_dir=str(output_dir),
+        report_to="none",
+        save_steps=config["training"]["save_steps"],
+        save_total_limit=config["training"]["save_total_limit"],
+    )

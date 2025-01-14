@@ -1,41 +1,21 @@
-# train.py
-import logging
+# sft.py
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
-import yaml
 from transformers import TrainingArguments
 from trl import SFTTrainer
 from unsloth import is_bfloat16_supported
 
-from models.model_utils import load_model, apply_peft_config, merge_peft_model
+from models.model_utils import (
+    load_model, apply_peft_config, merge_peft_model,
+    load_config, get_latest_checkpoint, setup_training_args, logger
+)
 from data.data_loader import load_data, get_file_paths, generate_prompts
 
 # 상수 정의
 CONFIG_PATH = Path("config/training_config.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs")
 DEFAULT_MERGED_MODEL_PATH = Path("./Qwen2.5-1.5B-SFT-merged")
-
-# 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-
-def load_config(config_path: Path) -> Dict:
-    """설정 파일을 로드합니다."""
-    try:
-        with config_path.open("r") as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        logger.error(f"설정 파일을 찾을 수 없습니다: {config_path}")
-        raise
-    except yaml.YAMLError as e:
-        logger.error(f"YAML 파싱 에러: {e}")
-        raise
-
 
 def setup_trainer(
     model,
@@ -46,26 +26,7 @@ def setup_trainer(
     output_dir: Path,
 ) -> SFTTrainer:
     """SFTTrainer를 설정하고 반환합니다."""
-    training_args = TrainingArguments(
-        per_device_train_batch_size=config["training"]["batch_size"],
-        gradient_accumulation_steps=config["training"]["gradient_accumulation_steps"],
-        warmup_steps=config["training"]["warmup_steps"],
-        num_train_epochs=config["training"]["epochs"],
-        learning_rate=config["training"]["learning_rate"],
-        evaluation_strategy="steps",
-        eval_steps=config["training"]["eval_steps"],
-        fp16=not is_bfloat16_supported(),
-        bf16=is_bfloat16_supported(),
-        logging_steps=config["training"]["logging_steps"],
-        optim=config["training"]["optimizer"],
-        weight_decay=config["training"]["weight_decay"],
-        lr_scheduler_type=config["training"]["lr_scheduler_type"],
-        seed=config["training"]["seed"],
-        output_dir=str(output_dir),
-        report_to="none",
-        save_steps=config["training"]["save_steps"],
-        save_total_limit=config["training"]["save_total_limit"],
-    )
+    training_args = setup_training_args(config, output_dir)
 
     return SFTTrainer(
         model=model,
@@ -79,16 +40,7 @@ def setup_trainer(
         args=training_args,
     )
 
-def get_latest_checkpoint(output_dir: Path) -> Optional[Path]:
-    """가장 최근 체크포인트를 반환합니다."""
-    checkpoints = list(output_dir.glob("checkpoint-*"))
-    if not checkpoints:
-        logger.warning("체크포인트가 존재하지 않습니다.")
-        return None
-    return max(checkpoints, key=lambda x: int(x.name.split("-")[-1]))
-
-
-def main() :
+def main():
     """메인 학습 프로세스를 실행합니다."""
     try:
         # 설정 로드
@@ -99,7 +51,7 @@ def main() :
         logger.info("모델 및 데이터 로딩 시작")
         # 모델 로드
         model, tokenizer = load_model(
-            config["model"]["name"],리
+            config["model"]["name"],
             max_seq_length=config["model"]["max_seq_length"],
         )
         model = apply_peft_config(
@@ -145,7 +97,6 @@ def main() :
     except Exception as e:
         logger.error(f"학습 중 에러 발생: {e}")
         raise
-
 
 if __name__ == "__main__":
     main()
