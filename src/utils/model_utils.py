@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # 기존 model_utils.py 함수들 (가정)
 def load_model(model_name: str, max_seq_length: int) -> Tuple:
     """모델과 토크나이저를 로드합니다."""
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype='auto')
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.model_max_length = max_seq_length
     return model, tokenizer
