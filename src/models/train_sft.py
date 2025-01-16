@@ -10,7 +10,7 @@ from models.model_utils import (
 from data.data_loader import load_data, get_file_paths, generate_prompts
 
 # 상수 정의
-CONFIG_PATH = Path("config/training_config.yaml")
+CONFIG_PATH = Path("config/sft.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs")
 DEFAULT_MERGED_MODEL_PATH = Path("./Qwen2.5-1.5B-SFT-merged")
 
