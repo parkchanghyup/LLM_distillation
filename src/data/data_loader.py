@@ -142,6 +142,23 @@ def save_results(train_df, test_df):
     logger.info(f"Train results saved to {train_output_path}")
     logger.info(f"Test results saved to {test_output_path}")
 
+def generate_prompt_dpo(row, tokenizer):
+    """DPO를 위한 프롬프트를 생성합니다. 임시로 text_reject 생성."""
+    _, _, dpo_template = create_prompt_templates()
+    text = row['text']
+    text_chosen = row['results']  # results를 chosen으로 사용
+    text_reject = "This is a suboptimal response."  # 임시 비선호 응답
+    formatted_prompt = dpo_template.format(docs=text)
+    messages = [
+        {"role": "system", "content": "you are a helpful assistant"},
+        {"role": "user", "content": formatted_prompt.messages[1].content}
+    ]
+    row['prompt'] = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
+    row['chosen'] = tokenizer.apply_chat_template([{"role": "assistant", "content": text_chosen}], tokenize=False)
+    row['rejected'] = tokenizer.apply_chat_template([{"role": "assistant", "content": text_reject}], tokenize=False)
+    return row
+
+
 # 실행 예시
 if __name__ == "__main__":
     from gemini_api import get_summary

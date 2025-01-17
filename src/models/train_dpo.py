@@ -7,7 +7,7 @@ from models.model_utils import (
     load_model, apply_peft_config, merge_peft_model,
     load_config, get_latest_checkpoint, setup_training_args, logger
 )
-from data.data_loader import load_data, get_file_paths, generate_prompts
+from data.data_loader import load_data, get_file_paths, generate_prompt_dpo
 
 # 상수 정의
 CONFIG_PATH = Path("config/dpo_config.yaml")
@@ -32,7 +32,7 @@ def setup_trainer(
 
     return CustomDPOTrainer(
         model=model,
-        ref_model=None,
+        ref_model=None,  # DPO는 참조 모델 없이도 동작 가능
         args=DPOConfig(
             **training_args.to_dict(),
             beta=config["dpo"]["beta"],
@@ -51,25 +51,36 @@ def main():
         config = load_config(CONFIG_PATH)
         output_dir = DEFAULT_OUTPUT_DIR
         merged_model_path = DEFAULT_MERGED_MODEL_PATH
+        training_type = config["model"].get("training_type", "sft").lower()
 
+        if training_type not in ["sft", "lora", "qlora"]:
+            raise ValueError("training_type은 'sft', 'lora', 'qlora' 중 하나여야 합니다.")
+
+        logger.info(f"학습 방식: {training_type} (DPO)")
         logger.info("모델 및 데이터 로딩 시작")
+
         # 모델 로드
+        use_qlora = config["peft"].get("use_qlora", False)
         model, tokenizer = load_model(
             config["model"]["name"],
             max_seq_length=config["model"]["max_seq_length"],
+            training_type=training_type,
+            use_qlora=use_qlora,
         )
         model = apply_peft_config(
             model,
             r=config["peft"]["r"],
             lora_alpha=config["peft"]["lora_alpha"],
+            training_type=training_type,
         )
 
-        # 데이터 로드
-        paths = get_file_paths()
+        # 데이터 로드 (config 전달)
+        paths = get_file_paths(config=config)
         dataset_dict = load_data(paths)
+        # DPO용 프롬프트 생성
         dataset_dict = dataset_dict.map(
-            lambda x: generate_prompts(x, tokenizer),
-            batched=True,
+            lambda x: generate_prompt_dpo(x, tokenizer),
+            batched=False,  # DPO는 행 단위 처리가 필요하므로 batched=False
         )
 
         # 트레이너 설정
@@ -87,14 +98,15 @@ def main():
         trainer_stats = trainer.train()
         logger.info(f"학습 완료: {trainer_stats}")
 
-        # 모델 병합
+        # 모델 병합 (LoRA 또는 QLoRA일 경우에만)
         latest_checkpoint = get_latest_checkpoint(output_dir)
-        if latest_checkpoint:
+        if latest_checkpoint and training_type in ["lora", "qlora"]:
             logger.info(f"모델 병합 시작: {latest_checkpoint}")
             merge_peft_model(
                 base_model_name=config["model"]["name"],
                 peft_model_path=str(latest_checkpoint),
                 merged_model_path=str(merged_model_path),
+                training_type=training_type,
             )
             logger.info("모델 병합 완료")
 
