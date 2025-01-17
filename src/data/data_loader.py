@@ -3,26 +3,40 @@ import pandas as pd
 from datasets import Dataset, DatasetDict
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+import logging
 from utils.prompt_utils import create_prompt_templates
 
+# 로깅 설정 (train_sft.py와 통일)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 # 파일 경로 설정
-def get_file_paths(data_root="./data", save_model_path="./models/trained_model"):
-    """적절한 파일 경로를 반환합니다."""
+def get_file_paths(config=None, data_root="./data", save_model_path="./models/trained_model"):
+    """적절한 파일 경로를 반환합니다. config가 제공되면 yaml 설정을 우선 사용."""
+    if config and "data" in config and "train_path" in config["data"] and "val_path" in config["data"]:
+        return {
+            'train_path': config["data"]["train_path"],
+            'val_path': config["data"]["val_path"],
+            'save_path': save_model_path
+        }
+    # 기본 경로 (config가 없거나 필드가 누락된 경우)
     train_file = "train/train.csv"
     val_file = "test/gemini_test_result.csv"
-    save_dir = save_model_path
     return {
         'train_path': os.path.join(data_root, train_file),
         'val_path': os.path.join(data_root, val_file),
-        'save_path': save_dir
+        'save_path': save_model_path
     }
 
 # 데이터 로딩 함수
 def load_data(paths):
     """훈련 및 검증 데이터셋을 로드합니다."""
     try:
-        print(f"Loading training data from: {paths['train_path']}")
-        print(f"Loading validation data from: {paths['val_path']}")
+        logger.info(f"Loading training data from: {paths['train_path']}")
+        logger.info(f"Loading validation data from: {paths['val_path']}")
         train_data = pd.read_csv(paths['train_path'])
         val_data = pd.read_csv(paths['val_path'])
         train_dataset = Dataset.from_pandas(train_data)
@@ -32,7 +46,7 @@ def load_data(paths):
             'validation': val_dataset
         })
     except Exception as e:
-        print(f"Error loading data: {e}")
+        logger.error(f"Error loading data: {e}")
         raise
 
 # 학습용 프롬프트 생성 함수
@@ -125,8 +139,8 @@ def save_results(train_df, test_df):
     test_output_path = os.path.join(BASE_PATH, 'gemini_summary/test_result.csv')
     train_df.to_csv(train_output_path, index=False)
     test_df.to_csv(test_output_path, index=False)
-    print(f"Train results saved to {train_output_path}")
-    print(f"Test results saved to {test_output_path}")
+    logger.info(f"Train results saved to {train_output_path}")
+    logger.info(f"Test results saved to {test_output_path}")
 
 # 실행 예시
 if __name__ == "__main__":

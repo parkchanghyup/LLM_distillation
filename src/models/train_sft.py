@@ -10,17 +10,18 @@ from models.model_utils import (
 from data.data_loader import load_data, get_file_paths, generate_prompts
 
 # 상수 정의
-CONFIG_PATH = Path("config/sft.yaml")
+CONFIG_PATH = Path("config/training_config.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs")
 DEFAULT_MERGED_MODEL_PATH = Path("./Qwen2.5-1.5B-SFT-merged")
 
+
 def setup_trainer(
-    model,
-    tokenizer,
-    train_dataset,
-    eval_dataset,
-    config: Dict,
-    output_dir: Path,
+        model,
+        tokenizer,
+        train_dataset,
+        eval_dataset,
+        config: Dict,
+        output_dir: Path,
 ) -> SFTTrainer:
     """SFTTrainer를 설정하고 반환합니다."""
     training_args = setup_training_args(config, output_dir)
@@ -37,6 +38,7 @@ def setup_trainer(
         args=training_args,
     )
 
+
 def main():
     """메인 학습 프로세스를 실행합니다."""
     try:
@@ -44,17 +46,27 @@ def main():
         config = load_config(CONFIG_PATH)
         output_dir = DEFAULT_OUTPUT_DIR
         merged_model_path = DEFAULT_MERGED_MODEL_PATH
+        training_type = config["model"].get("training_type", "sft").lower()
 
+        if training_type not in ["sft", "lora", "qlora"]:
+            raise ValueError("training_type은 'sft', 'lora', 'qlora' 중 하나여야 합니다.")
+
+        logger.info(f"학습 방식: {training_type}")
         logger.info("모델 및 데이터 로딩 시작")
+
         # 모델 로드
+        use_qlora = config["peft"].get("use_qlora", False)
         model, tokenizer = load_model(
             config["model"]["name"],
             max_seq_length=config["model"]["max_seq_length"],
+            training_type=training_type,
+            use_qlora=use_qlora,
         )
         model = apply_peft_config(
             model,
             r=config["peft"]["r"],
             lora_alpha=config["peft"]["lora_alpha"],
+            training_type=training_type,
         )
 
         # 데이터 로드
@@ -80,20 +92,22 @@ def main():
         trainer_stats = trainer.train()
         logger.info(f"학습 완료: {trainer_stats}")
 
-        # 모델 병합
+        # 모델 병합 (LoRA 또는 QLoRA일 경우에만)
         latest_checkpoint = get_latest_checkpoint(output_dir)
-        if latest_checkpoint:
+        if latest_checkpoint and training_type in ["lora", "qlora"]:
             logger.info(f"모델 병합 시작: {latest_checkpoint}")
             merge_peft_model(
                 base_model_name=config["model"]["name"],
                 peft_model_path=str(latest_checkpoint),
                 merged_model_path=str(merged_model_path),
+                training_type=training_type,
             )
             logger.info("모델 병합 완료")
 
     except Exception as e:
         logger.error(f"학습 중 에러 발생: {e}")
         raise
+
 
 if __name__ == "__main__":
     main()

@@ -2,10 +2,12 @@
 model:
   name: "unsloth/Qwen2.5-1.5B-Instruct"
   max_seq_length: 2048
+  training_type: "sft"  # "sft", "lora", "qlora" 중 선택
 
-peft:
+peft:  # LoRA/QLoRA에만 적용
   r: 16
   lora_alpha: 16
+  use_qlora: false  # QLoRA 사용 여부 (LoRA와 함께 사용 가능)
 
 data:
   num_proc: 2
