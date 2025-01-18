@@ -6,7 +6,7 @@ from data.gemini_api import get_summary
 from data.data_loader import load_and_sample_data
 
 BASE_PATH = '../data'
-가
+
 def generate_summaries(train_df, test_df, summary_func):
     """train/test 데이터프레임에 대해 요약 결과 생성"""
     train_results = []
@@ -25,8 +25,8 @@ def generate_summaries(train_df, test_df, summary_func):
 
 def save_results(train_df, test_df):
     """train과 test 결과를 CSV로 저장"""
-    train_output_path = os.path.join(BASE_PATH, 'gemini_summary/gemini_train_result.csv')
-    test_output_path = os.path.join(BASE_PATH, 'gemini_summary/gemini_test_result.csv')
+    train_output_path = os.path.join(BASE_PATH, 'train/llm_train.csv')
+    test_output_path = os.path.join(BASE_PATH, 'test/test.csv')
     train_df.to_csv(train_output_path, index=False)
     test_df.to_csv(test_output_path, index=False)
     print(f"Train results saved to {train_output_path}")
