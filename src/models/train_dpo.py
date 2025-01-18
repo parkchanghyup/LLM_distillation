@@ -10,7 +10,7 @@ from utils.model_utils import (
 from data.data_loader import load_data, get_file_paths, generate_prompt_dpo
 
 # 상수 정의
-CONFIG_PATH = Path("config/dpo_config.yaml")
+CONFIG_PATH = Path("configs/dpo.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs_dpo")
 DEFAULT_MERGED_MODEL_PATH = Path("./Qwen2.5-1.5B-DPO-merged")
 
