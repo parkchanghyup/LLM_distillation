@@ -3,7 +3,7 @@ from typing import Dict
 
 from trl import SFTTrainer
 
-from models.model_utils import (
+from utils.model_utils import (
     load_model, apply_peft_config, merge_peft_model,
     load_config, get_latest_checkpoint, setup_training_args, logger
 )
