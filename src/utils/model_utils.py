@@ -6,7 +6,6 @@ from typing import Dict, Optional, Tuple
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import get_peft_model, LoraConfig, prepare_model_for_kbit_training
-from unsloth import is_bfloat16_supported
 
 # 로깅 설정
 logging.basicConfig(
@@ -99,11 +98,10 @@ def setup_training_args(config: Dict, output_dir: Path) -> "TrainingArguments":
         gradient_accumulation_steps=config["training"]["gradient_accumulation_steps"],
         warmup_steps=config["training"]["warmup_steps"],
         num_train_epochs=config["training"]["epochs"],
+        max_steps=config["training"]["max_steps"],
         learning_rate=config["training"]["learning_rate"],
         evaluation_strategy="steps",
         eval_steps=config["training"]["eval_steps"],
-        fp16=not is_bfloat16_supported(),
-        bf16=is_bfloat16_supported(),
         logging_steps=config["training"]["logging_steps"],
         optim=config["training"]["optimizer"],
         weight_decay=config["training"]["weight_decay"],
