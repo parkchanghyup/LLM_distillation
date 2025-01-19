@@ -7,7 +7,7 @@ import logging
 from utils.prompt_utils import create_prompt_templates
 from trl import apply_chat_template
 
-# 로깅 설정 (train_sft.py와 통일)
+# 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 파일 경로 설정
-def get_file_paths(config=None, data_root="./data", save_model_path="./models/trained_model"):
+def get_file_paths(config=None, data_root="../data", save_model_path="./models/trained_model"):
     """적절한 파일 경로를 반환합니다. config가 제공되면 yaml 설정을 우선 사용."""
     if config and "data" in config and "train_path" in config["data"] and "val_path" in config["data"]:
         return {
@@ -53,7 +53,7 @@ def load_data(paths):
 # 학습용 프롬프트 생성 함수
 def generate_prompts(examples, tokenizer):
     """훈련 데이터셋용 프롬프트를 생성합니다."""
-    training_template, _, _ = create_prompt_templates()
+    training_template, _ = create_prompt_templates()
     instructions = examples["text"]
     results = examples["results"]
     texts = []
@@ -71,7 +71,7 @@ def generate_prompts(examples, tokenizer):
 # Inference용 프롬프트 생성 함수
 def generate_inference_prompts(docs, tokenizer):
     """추론을 위한 프롬프트를 생성합니다."""
-    _, inference_template, _ = create_prompt_templates()
+    _, inference_template = create_prompt_templates()
     texts = []
     for doc in docs:
         formatted_prompt = inference_template.format(docs=doc)

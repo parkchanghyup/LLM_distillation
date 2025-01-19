@@ -24,8 +24,4 @@ def create_prompt_templates():
         SystemMessage(content="you are a helpful assistant"),
         HumanMessagePromptTemplate.from_template(prompt_text)
     ])
-    dpo_prompt_template = ChatPromptTemplate.from_messages([
-        SystemMessage(content="you are a helpful assistant"),
-        HumanMessagePromptTemplate.from_template(prompt_text)
-    ])
-    return training_prompt_template, inference_prompt_template, dpo_prompt_template
+    return training_prompt_template, inference_prompt_template
