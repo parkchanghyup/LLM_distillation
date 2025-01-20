@@ -1,0 +1,21 @@
+# Core dependencies
+torc
+transformers
+peft
+accelerate
+bitsandbytes
+datasets
+pandas
+numpy
+scikit-learn
+tqdm
+
+# Google API
+google-generativeai
+
+# LLM inference
+vllm>=0.6.4
+sentencepiece
+# Configuration and utilities
+pyyaml>=6.0
+python-dotenv>=1.0.0
