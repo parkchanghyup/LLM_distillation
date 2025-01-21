@@ -1,5 +1,5 @@
 import os
-거from tqdm import tqdm
+from tqdm import tqdm
 from data.gemini_api import get_summary
 from data.data_loader import load_and_sample_data
 from utils.vllm_utils import generate_summary_vllm
