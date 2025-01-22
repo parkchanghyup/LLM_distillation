@@ -4,7 +4,7 @@ import json
 from typing import Dict
 
 # API 설정
-API_URL = "http://localhost:8000/summarize"
+API_URL = "http://localhost:8010/summarize"
 
 @cl.on_chat_start
 async def start():
@@ -32,18 +32,16 @@ async def main(message: cl.Message):
             result: Dict = response.json()
 
         # 요약 결과 표시
-        await msg.update(content=f"요약문:\n\n{result['summary']}")
+        summary_text = f"요약문:\n\n{result['summary']}"
+        await msg.update()  # 먼저 업데이트
+        await cl.Message(content=summary_text).send()  # 새 메시지로 요약 표시
 
-        # 원본 텍스트와 요약문 비교를 위한 요소 추가
-        elements = [
-            cl.Text(name="original", content=message.content, display="side", language="text"),
-            cl.Text(name="summary", content=result['summary'], display="side", language="text")
-        ]
-        await msg.update(elements=elements)
 
     except httpx.HTTPError as e:
         error_message = f"API 요청 중 오류가 발생했습니다: {str(e)}"
-        await msg.update(content=error_message)
+        await msg.update()  # 먼저 업데이트
+        await cl.Message(content=error_message).send()  # 새 메시지로 에러 표시
     except Exception as e:
         error_message = f"오류가 발생했습니다: {str(e)}"
-        await msg.update(content=error_message)
+        await msg.update()  # 먼저 업데이트
+        await cl.Message(content=error_message).send()  # 새 메시지로 에러 표시
