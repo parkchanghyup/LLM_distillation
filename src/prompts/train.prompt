@@ -1,0 +1,15 @@
+Please summarize the documentation provided in 3 lines.
+    Also, please extract the top five key phrases. See template for the answer format.
+    The summary must be written in Korean.
+    <template>
+    summary
+    - summarize 1
+    - summarize 2
+    - summarize 3
+
+    key phrases
+    [key phrase1, key phrase2, key phrase3, key phrase4, key phrase5]
+    </template>
+
+    docs:
+    {docs}
