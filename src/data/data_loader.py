@@ -114,12 +114,32 @@ def generate_prompt_dpo(row, tokenizer):
 # Gemini 데이터 생성 및 요약 추가
 BASE_PATH = '../data'
 
-def load_and_sample_data(data_num, random_state=323):
-    """데이터를 로드하고 샘플링한 뒤 train/test로 분할"""
-    df = pd.read_csv(os.path.join(BASE_PATH, 'raw/data.csv'))
-    df_sample = df.sample(n=data_num, random_state=random_state).reset_index(drop=True)
-    train_df, test_df = train_test_split(df_sample, test_size=0.2, random_state=random_state)
-    return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+def load_and_sample_data(num_samples=None, remaining=False, random_state=323):
+    """데이터를 로드하고 샘플링한 뒤 train/test로 분할
+    
+    Args:
+        num_samples (int, optional): 샘플링할 데이터 수
+        remaining (bool): True일 경우 train/test에서 사용되지 않은 나머지 데이터 반환
+        random_state (int): 랜덤 시드
+    """
+    df = pd.read_csv(os.path.join(BASE_PATH, 'raw/train.csv'))
+    
+    if remaining:
+        # train과 test에서 사용된 데이터의 인덱스를 가져옴
+        used_train = pd.read_csv(os.path.join(BASE_PATH, 'train/llm_train.csv'))
+        used_test = pd.read_csv(os.path.join(BASE_PATH, 'test/test.csv'))
+        used_indices = pd.concat([used_train, used_test])['text'].values
+        
+        # 사용되지 않은 데이터만 필터링
+        remaining_df = df[~df['text'].isin(used_indices)].reset_index(drop=True)
+        return remaining_df
+    
+    if num_samples:
+        df_sample = df.sample(n=num_samples, random_state=random_state).reset_index(drop=True)
+        train_df, test_df = train_test_split(df_sample, test_size=0.5, random_state=random_state)
+        return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+    
+    return df
 
 def generate_summaries(train_df, test_df, summary_func):
     """train/test 데이터프레임에 대해 요약 결과 생성"""
