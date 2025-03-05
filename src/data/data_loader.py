@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import logging
 from utils.prompt_utils import create_prompt_templates
+from trl import apply_chat_template
 
 # 로깅 설정 (train_sft.py와 통일)
 logging.basicConfig(
@@ -96,15 +97,18 @@ def generate_prompt_dpo(row, tokenizer):
     ]
     message_chosen = [{"role": "assistant", "content": f"{text_chosen}"}]
     message_reject = [{"role": "assistant", "content": f"{text_reject}"}]
-    row['prompt'] = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-    row['chosen'] = tokenizer.apply_chat_template(message_chosen, tokenize=False, add_generation_prompt=False)
-    row['chosen'] = row['chosen'].replace(
-        '<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n', ''
-    )
-    row['rejected'] = tokenizer.apply_chat_template(message_reject, tokenize=False, add_generation_prompt=False)
-    row['rejected'] = row['rejected'].replace(
-        '<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n', ''
-    )
+
+    dpo_data = {
+        "prompt": messages,
+        "chosen": message_chosen,
+        "rejected": message_reject
+}
+    formatted_data = apply_chat_template(dpo_data, tokenizer)
+
+    row['prompt'] = formatted_data['prompt']
+    row['chosen'] = formatted_data['chosen']
+    row['rejected'] = formatted_data['rejected']
+
     return row
 
 # Gemini 데이터 생성 및 요약 추가
@@ -112,7 +116,7 @@ BASE_PATH = '../data'
 
 def load_and_sample_data(data_num, random_state=323):
     """데이터를 로드하고 샘플링한 뒤 train/test로 분할"""
-    df = pd.read_csv(os.path.join(BASE_PATH, 'raw/train.csv'))
+    df = pd.read_csv(os.path.join(BASE_PATH, 'raw/data.csv'))
     df_sample = df.sample(n=data_num, random_state=random_state).reset_index(drop=True)
     train_df, test_df = train_test_split(df_sample, test_size=0.2, random_state=random_state)
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
@@ -141,22 +145,6 @@ def save_results(train_df, test_df):
     test_df.to_csv(test_output_path, index=False)
     logger.info(f"Train results saved to {train_output_path}")
     logger.info(f"Test results saved to {test_output_path}")
-
-def generate_prompt_dpo(row, tokenizer):
-    """DPO를 위한 프롬프트를 생성합니다. 임시로 text_reject 생성."""
-    _, _, dpo_template = create_prompt_templates()
-    text = row['text']
-    text_chosen = row['results']  # results를 chosen으로 사용
-    text_reject = "This is a suboptimal response."  # 임시 비선호 응답
-    formatted_prompt = dpo_template.format(docs=text)
-    messages = [
-        {"role": "system", "content": "you are a helpful assistant"},
-        {"role": "user", "content": formatted_prompt.messages[1].content}
-    ]
-    row['prompt'] = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-    row['chosen'] = tokenizer.apply_chat_template([{"role": "assistant", "content": text_chosen}], tokenize=False)
-    row['rejected'] = tokenizer.apply_chat_template([{"role": "assistant", "content": text_reject}], tokenize=False)
-    return row
 
 
 # 실행 예시
