@@ -2,12 +2,12 @@
 model:
   name: "unsloth/Qwen2.5-1.5B-Instruct"
   max_seq_length: 2048
-  training_type: "sft"  # "sft", "lora", "qlora" 중 선택
+  training_type: "qlora"  # "sft", "lora", "qlora" 중 선택
 
 peft:  # LoRA/QLoRA에만 적용
   r: 16
   lora_alpha: 16
-  use_qlora: false  # QLoRA 사용 여부 (LoRA와 함께 사용 가능)
+  use_qlora: true  # QLoRA 사용 여부 (LoRA와 함께 사용 가능)
 
 data:
   num_proc: 2
@@ -19,10 +19,11 @@ training:
   epochs: 3
   learning_rate: 3e-5
   eval_steps: 1000
+  eval_strategy: "steps"
   logging_steps: 500
   optimizer: "adamw_8bit"
   weight_decay: 0.01
   lr_scheduler_type: "linear"
-  seed: 3407
+  seed: 323
   save_steps: 1000
   save_total_limit: 3
