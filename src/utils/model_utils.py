@@ -91,23 +91,40 @@ def get_latest_checkpoint(output_dir: Path) -> Optional[Path]:
 def setup_training_args(config: Dict, output_dir: Path) -> "TrainingArguments":
     """TrainingArguments를 설정하고 반환합니다."""
     from transformers import TrainingArguments
+    import os
 
-    return TrainingArguments(
-        per_device_train_batch_size=config["training"]["batch_size"],
-        gradient_accumulation_steps=config["training"]["gradient_accumulation_steps"],
-        warmup_steps=config["training"]["warmup_steps"],
-        num_train_epochs=config["training"]["epochs"],
-        max_steps=config["training"]["max_steps"],
-        learning_rate=config["training"]["learning_rate"],
-        evaluation_strategy="steps",
-        eval_steps=config["training"]["eval_steps"],
-        logging_steps=config["training"]["logging_steps"],
-        optim=config["training"]["optimizer"],
-        weight_decay=config["training"]["weight_decay"],
-        lr_scheduler_type=config["training"]["lr_scheduler_type"],
-        seed=config["training"]["seed"],
-        output_dir=str(output_dir),
-        report_to="none",
-        save_steps=config["training"]["save_steps"],
-        save_total_limit=config["training"]["save_total_limit"],
-    )
+    # 출력 디렉토리 생성
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 기본 설정
+    training_args = {
+        "per_device_train_batch_size": config["training"]["batch_size"],
+        "gradient_accumulation_steps": config["training"]["gradient_accumulation_steps"],
+        "warmup_steps": config["training"]["warmup_steps"],
+        # "num_train_epochs": config["training"]["epochs"],
+        "max_steps": config["training"]["max_steps"],
+        "learning_rate": float(config["training"]["learning_rate"]),
+        "logging_steps": config["training"]["logging_steps"],
+        "optim": config["training"]["optimizer"],
+        "weight_decay": config["training"]["weight_decay"],
+        "lr_scheduler_type": config["training"]["lr_scheduler_type"],
+        "seed": config["training"]["seed"],
+        "output_dir": str(output_dir),
+        "report_to": "none",
+        "save_strategy": "steps",  # 명시적으로 steps로 설정
+        "save_steps": config["training"]["save_steps"],
+        "save_total_limit": config["training"]["save_total_limit"],
+        "fp16": True,  # 학습 속도 향상을 위해 fp16 활성화
+        "overwrite_output_dir": True,  # 기존 출력 디렉토리 덮어쓰기
+        "disable_tqdm": False,  # 진행 상황 표시
+        "load_best_model_at_end": False,  # 평가 데이터가 없을 수 있으므로 False로 설정
+    }
+
+    # evaluation_strategy 설정 (config에서 직접 가져오거나 기본값 사용)
+    evaluation_strategy = config["training"].get("evaluation_strategy", "no")
+    training_args["evaluation_strategy"] = evaluation_strategy
+
+    if evaluation_strategy == "steps":
+        training_args["eval_steps"] = config["training"].get("eval_steps", 5)
+
+    return TrainingArguments(**training_args)
