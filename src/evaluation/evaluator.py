@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from vllm import LLM, SamplingParams
 from data.data_loader import generate_inference_prompts
-from data.gemini_api import get_summary
+from data.gemini_api import get_evaluate
 from utils.config_utils import PROMPT_DIR
 
 # 로깅 설정
@@ -25,7 +25,7 @@ def evaluate_summary_with_gemini(reference: str, generated: str, evaluation_prom
         reference_summary=reference,
         generated_summary=generated
     )
-    evaluation_result = get_summary(formatted_prompt)
+    evaluation_result = get_evaluate(formatted_prompt)
     return evaluation_result
 
 

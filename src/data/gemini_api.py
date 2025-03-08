@@ -22,3 +22,7 @@ def get_summary(text):
     formatted_prompt = training_template.format(docs=text)
     response = client.models.generate_content(model=MODEL_NAME, contents=formatted_prompt)
     return response.text
+
+def get_evaluate(text):
+    response = client.models.generate_content(model=MODEL_NAME, contents=text)
+    return response.text
