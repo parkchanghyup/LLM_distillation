@@ -3,9 +3,11 @@
 이 프로젝트는 대형 언어 모델(LLM)을 활용하여 학습 데이터 셋을 생성하고 해당 데이터 셋으로 더 작은 모델을 학습시키는 효율적인 접근 방식을 보여줍니다.   
 이는 리소스가 제한된 환경에서 고성능 LLM을 사용하는 과제를 해결하기 위해, 더 큰 모델로 고품질 학습 데이터를 생성하고 이를 사용하여 더 작고 배포가 용이한 모델을 최적화하는 방법을 다룹니다.
 
+## 프로젝트 아키텍쳐
+
 ## 프로젝트 개요
 
-이 프로젝트의 주요 구성 요소는 다음과 같습니다:
+이 프로젝트의 주요 구성 요소는 다음과 같습니다.
 
 1. **문서 요약**: 대형 모델(예: Gemini)을 사용하여 입력 문서의 요약을 생성합니다.
 2. **모델 학습**: 생성된 요약을 바탕으로 더 작은 모델을 학습하여 성능을 향상시킵니다.
@@ -60,24 +62,19 @@ python src/main.py
 ```
 LLM_distillation/
 ├── configs/                  # 구성 파일
-│   ├── sft.yaml              # SFT 학습 구성
+│   ├── student_model.yaml    # student 모델  학습 구성
+│   ├── teacher_model.yaml    # teacher 모델  학습 구성
 │   ├── dpo.yaml              # DPO 학습 구성
-│   ├── eval_config.yaml      # 평가 구성
-│   └── data_config.yaml      # 데이터 구성
 ├── data/                     # 데이터 디렉토리
 │   ├── raw/                  # 원본 데이터
 │   ├── train/                # 학습 데이터
 │   ├── test/                 # 테스트 데이터
-│   ├── processed/            # 전처리된 데이터
 │   ├── gemini_summary/       # Gemini로 생성된 요약
 │   └── model_outputs/        # 모델 출력 결과
 ├── models/                   # 저장된 모델 파일
-├── notebooks/                # 주피터 노트북
 ├── prompts/                  # 프롬프트 템플릿
 │   ├── general_prompt.txt    # 일반 프롬프트
 │   └── summary_evaluation_prompt.txt  # 요약 평가 프롬프트
-├── results/                  # 결과 저장 디렉토리
-├── scripts/                  # 유틸리티 스크립트
 ├── src/                      # 소스 코드
 │   ├── data/                 # 데이터 처리 관련 코드
 │   ├── demo/                 # 데모 애플리케이션
@@ -87,7 +84,6 @@ LLM_distillation/
 │   ├── utils/                # 유틸리티 함수
 │   └── main.py               # 메인 실행 파일
 ├── .env                      # 환경 변수 파일
-├── .gitignore                # Git 무시 파일
 ├── README.md                 # 프로젝트 설명
 └── requirements.txt          # 필요한 패키지 목록
 ```
@@ -113,6 +109,5 @@ LLM_distillation/
 ### 5. 데모 (src/demo/)
 - 학습된 모델을 활용한 데모 애플리케이션
 
-## 라이센스
-
-이 프로젝트는 MIT 라이센스 하에 배포됩니다.
+![img1](./images/img_1.png)
+![img2](./images/img_2.png)
