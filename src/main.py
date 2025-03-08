@@ -2,7 +2,6 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
-from pathlib import Path
 from data.data_loader import load_and_sample_data
 from scripts.summarizer import generate_summaries
 from data.gemini_api import get_summary
@@ -63,7 +62,7 @@ def main():
 
     # 1. Gemini API를 사용하여 요약문 생성
     logger.info("Step 1: Generating summaries using Gemini API...")
-    num_samples = int(os.environ.get("NUM_SAMPLES", 10))  # 환경변수에서 값을 가져오고, 기본값은 10
+    num_samples = int(os.environ.get("NUM_SAMPLES", 1000))  # 환경변수에서 값을 가져오고, 기본값은 1000
     train_df, test_df = load_and_sample_data(num_samples=num_samples)
     train_df, test_df = generate_summaries(train_df, test_df, get_summary)
 
@@ -91,7 +90,7 @@ def main():
 
     # 4. Model B 학습
     logger.info("Step 4: Training Model B...")
-    model_b = train_model_b(str(slm_train_path), str(test_path))  # 테스트 데이터를 평가 데이터로 사용
+    train_model_b(str(slm_train_path), str(test_path))  # 테스트 데이터를 평가 데이터로 사용
     logger.info(f"Model B 학습 완료: {MODEL_B_MERGED_DIR}")
 
     # 5. 평가
