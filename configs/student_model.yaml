@@ -1,5 +1,5 @@
 model:
-  name: "Qwne/Qwen2.5-3B-Instruct"
+  name: "Qwen/Qwen2.5-3B-Instruct"
   max_seq_length: 2048
   training_type: "sft"
 
