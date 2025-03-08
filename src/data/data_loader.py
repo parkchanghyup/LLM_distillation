@@ -193,6 +193,6 @@ def save_results(train_df, test_df):
 if __name__ == "__main__":
     from gemini_api import get_summary
 
-    train_df, test_df = load_and_sample_data(data_num=100)  # 예시로 100개 샘플
+    train_df, test_df = load_and_sample_data(num_samples=100)  # 예시로 100개 샘플
     train_df, test_df = generate_summaries(train_df, test_df, get_summary)
     save_results(train_df, test_df)
