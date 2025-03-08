@@ -50,8 +50,7 @@ def apply_peft_config(model, r: int, lora_alpha: int, training_type: str, random
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
             lora_dropout=0.05,
             bias="none",
-            task_type="CAUSAL_LM",
-            random_state=random_state,
+            task_type="CAUSAL_LM"
         )
         return get_peft_model(model, peft_config)
     return model
