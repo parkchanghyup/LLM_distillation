@@ -72,12 +72,13 @@ def train_model_a(train_data_path: str, eval_data_path: str = None):
         )
 
         # LoRA 설정 적용
-        model = apply_peft_config(
-            model,
-            r=config["peft"]["r"],
-            lora_alpha=config["peft"]["lora_alpha"],
-            training_type="qlora"
-        )
+        if config['model']['training_type'] == 'qlora' or config['model']['training_type'] == 'lora':
+            model = apply_peft_config(
+                model,
+                r=config["peft"]["r"],
+                lora_alpha=config["peft"]["lora_alpha"],
+                training_type="qlora"
+            )
 
         # 데이터셋 준비
         train_dataset = prepare_dataset(train_data_path)
@@ -121,14 +122,21 @@ def train_model_a(train_data_path: str, eval_data_path: str = None):
         # MODEL_A_MERGED_DIR 디렉토리 생성
         MODEL_A_MERGED_DIR.mkdir(parents=True, exist_ok=True)
 
-        merge_peft_model(
-            base_model_name=config["model"]["name"],
-            peft_model_path=str(latest_checkpoint),
-            merged_model_path=str(MODEL_A_MERGED_DIR),
-            training_type="qlora"
-        )
-        tokenizer.save_pretrained(str(MODEL_A_MERGED_DIR))
-        logger.info(f"Model A 병합 완료: {MODEL_A_MERGED_DIR}")
+        if config['model']['training_type'] == 'qlora' or config['model']['training_type'] == 'lora':
+            merge_peft_model(
+                base_model_name=config["model"]["name"],
+                peft_model_path=str(latest_checkpoint),
+                merged_model_path=str(MODEL_A_MERGED_DIR),
+                training_type="qlora"
+            )
+            tokenizer.save_pretrained(str(MODEL_A_MERGED_DIR))
+            logger.info(f"Model A 병합 완료: {MODEL_A_MERGED_DIR}")
+        else:
+            # 모델 저장
+            logger.info(f"Model A 저장 시작: {MODEL_A_MERGED_DIR}")
+            trainer.save_model(str(MODEL_A_MERGED_DIR))
+            tokenizer.save_pretrained(str(MODEL_A_MERGED_DIR))
+            logger.info(f"Model A 저장 완료: {MODEL_A_MERGED_DIR}")
 
         return model
     except Exception as e:
@@ -163,6 +171,15 @@ def train_model_b(train_data_path: str, eval_data_path: str = None):
             use_qlora=config["peft"]["use_qlora"]
         )
 
+        # LoRA 설정 적용
+        if config['model']['training_type'] == 'qlora' or config['model']['training_type'] == 'lora':
+            model = apply_peft_config(
+                model,
+                r=config["peft"]["r"],
+                lora_alpha=config["peft"]["lora_alpha"],
+                training_type="qlora"
+            )
+
         # 데이터셋 준비
         train_dataset = prepare_dataset(train_data_path)
         eval_dataset = prepare_dataset(eval_data_path)
@@ -186,16 +203,38 @@ def train_model_b(train_data_path: str, eval_data_path: str = None):
         # 학습 실행
         trainer.train()
 
+        # 체크포인트 디렉토리가 존재하는지 확인
+        checkpoints = list(MODEL_B_OUTPUT_DIR.glob("checkpoint-*"))
+        if not checkpoints:
+            logger.error("체크포인트가 생성되지 않았습니다. 모델 저장에 실패했을 수 있습니다.")
+            # 체크포인트가 없으면 현재 모델 상태 저장
+            logger.info("현재 모델 상태를 저장합니다.")
+            trainer.save_model(str(MODEL_B_OUTPUT_DIR / "final"))
+            checkpoints = [MODEL_B_OUTPUT_DIR / "final"]
+
+        latest_checkpoint = max(checkpoints, key=lambda x: int(x.name.split("-")[-1]) if "checkpoint-" in x.name else 0)
+
         # MODEL_B_MERGED_DIR 디렉토리 생성
         MODEL_B_MERGED_DIR.mkdir(parents=True, exist_ok=True)
 
         # 모델 저장
-        logger.info(f"Model B 저장 시작: {MODEL_B_MERGED_DIR}")
-        trainer.save_model(str(MODEL_B_MERGED_DIR))
-        tokenizer.save_pretrained(str(MODEL_B_MERGED_DIR))
-        logger.info(f"Model B 저장 완료: {MODEL_B_MERGED_DIR}")
+        if config['model']['training_type'] == 'qlora' or config['model']['training_type'] == 'lora':
+            merge_peft_model(
+                base_model_name=config["model"]["name"],
+                peft_model_path=str(latest_checkpoint),
+                merged_model_path=str(MODEL_B_MERGED_DIR),
+                training_type="qlora"
+            )
+            tokenizer.save_pretrained(str(MODEL_B_MERGED_DIR))
+            logger.info(f"Model A 병합 완료: {MODEL_B_MERGED_DIR}")
+        else:
 
-        return model
+            logger.info(f"Model A 저장 시작: {MODEL_B_MERGED_DIR}")
+            trainer.save_model(str(MODEL_B_MERGED_DIR))
+            tokenizer.save_pretrained(str(MODEL_B_MERGED_DIR))
+            logger.info(f"Model A 저장 완료: {MODEL_B_MERGED_DIR}")
+
+        return
     except Exception as e:
         logger.error(f"Model B 학습 중 오류 발생: {e}")
         raise
