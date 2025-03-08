@@ -1,0 +1,28 @@
+model:
+  name: "Qwne/Qwen2.5-3B-Instruct"
+  max_seq_length: 2048
+  training_type: "sft"
+
+peft:  # LoRA 설정
+  r: 16
+  lora_alpha: 32
+  use_qlora: false  # 일반 LoRA 사용
+
+data:
+  num_proc: 2
+
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  warmup_steps: 500
+  epochs: 3
+  learning_rate: 5e-5
+  eval_steps: 500
+  eval_strategy: "steps"
+  logging_steps: 500
+  optimizer: "adamw_8bit"
+  weight_decay: 0.01
+  lr_scheduler_type: "linear"
+  seed: 323
+  save_steps: 1000
+  save_total_limit: 2 

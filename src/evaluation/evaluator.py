@@ -30,10 +30,10 @@ def evaluate_summary_with_gemini(reference: str, generated: str, evaluation_prom
 
 
 def evaluate_models(model_path: str, test_data_path: str) -> None:
-    """Model B와 Gemini API의 성능을 비교 평가
+    """Student 모델과 Gemini API의 성능을 비교 평가
 
     Args:
-        model_path: 학습된 Model B의 저장 경로
+        model_path: 학습된 Student 모델의 저장 경로
         test_data_path: 테스트 데이터 CSV 파일 경로
     """
     logger.info("모델 평가 시작")
@@ -60,8 +60,8 @@ def evaluate_models(model_path: str, test_data_path: str) -> None:
     logger.info("추론용 프롬프트 생성 중")
     prompts = generate_inference_prompts(test_df['text'].tolist(), tokenizer)
 
-    # 모델 B로 추론 수행
-    logger.info("Model B로 추론 수행 중")
+    # Student 모델로 추론 수행
+    logger.info("Student 모델로 추론 수행 중")
     outputs = llm.generate(prompts, sampling_params)
     sft_results = [output.outputs[0].text for output in outputs]
     test_df['sft_result'] = sft_results

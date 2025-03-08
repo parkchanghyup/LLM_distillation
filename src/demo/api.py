@@ -17,7 +17,7 @@ app = FastAPI(
 )
 
 # 모델 경로 설정
-MODEL_PATH = Path("outputs/model_b/merged")
+MODEL_PATH = Path("outputs/student_model/merged")
 
 # Request/Response 모델
 class SummarizationRequest(BaseModel):

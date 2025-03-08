@@ -1,0 +1,28 @@
+model:
+  name: "unsloth/Qwen2.5-14B-Instruct"
+  max_seq_length: 2048
+  training_type: "qlora"  # Teacher 모델은 Q-LoRA 사용
+
+peft:  # LoRA/QLoRA 설정
+  r: 16
+  lora_alpha: 32
+  use_qlora: true  # QLoRA 사용
+
+data:
+  num_proc: 2
+
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  warmup_steps: 500
+  epochs: 3
+  learning_rate: 3e-5
+  eval_steps: 500
+  eval_strategy: "steps"
+  logging_steps: 500
+  optimizer: "adamw_8bit"
+  weight_decay: 0.01
+  lr_scheduler_type: "linear"
+  seed: 323
+  save_steps: 500
+  save_total_limit: 3 

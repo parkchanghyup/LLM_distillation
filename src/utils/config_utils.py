@@ -17,13 +17,15 @@ PROMPT_DIR = ROOT_DIR / "prompts"
 
 # 설정 파일 경로
 SFT_CONFIG_PATH = CONFIG_DIR / "sft.yaml"
+TEACHER_CONFIG_PATH = CONFIG_DIR / "teacher_model.yaml"
+STUDENT_CONFIG_PATH = CONFIG_DIR / "student_model.yaml"
 DPO_CONFIG_PATH = CONFIG_DIR / "dpo.yaml"
 
 # 모델 경로
-MODEL_A_OUTPUT_DIR = OUTPUT_DIR / "model_a"
-MODEL_B_OUTPUT_DIR = OUTPUT_DIR / "model_b"
-MODEL_A_MERGED_DIR = MODEL_A_OUTPUT_DIR / "merged"
-MODEL_B_MERGED_DIR = MODEL_B_OUTPUT_DIR / "merged"
+TEACHER_MODEL_OUTPUT_DIR = OUTPUT_DIR / "teacher_model"
+STUDENT_MODEL_OUTPUT_DIR = OUTPUT_DIR / "student_model"
+TEACHER_MODEL_MERGED_DIR = TEACHER_MODEL_OUTPUT_DIR / "merged"
+STUDENT_MODEL_MERGED_DIR = STUDENT_MODEL_OUTPUT_DIR / "merged"
 
 # DPO 모델 경로
 DPO_OUTPUT_DIR = OUTPUT_DIR / "dpo"
@@ -63,8 +65,8 @@ def ensure_directories():
         RAW_DATA_DIR,
         TRAIN_DATA_DIR,
         TEST_DATA_DIR,
-        MODEL_A_OUTPUT_DIR,
-        MODEL_B_OUTPUT_DIR,
+        TEACHER_MODEL_OUTPUT_DIR,
+        STUDENT_MODEL_OUTPUT_DIR,
         DPO_OUTPUT_DIR,
         OUTPUT_DIR / "evaluation",
         PROMPT_DIR
