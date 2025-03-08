@@ -8,11 +8,13 @@ from utils.model_utils import (
     load_config, get_latest_checkpoint, setup_training_args, logger
 )
 from data.data_loader import load_data, get_file_paths, generate_prompt_dpo
+from utils.config_utils import (
+    DPO_CONFIG_PATH, OUTPUT_DIR, ROOT_DIR
+)
 
 # 상수 정의
-CONFIG_PATH = Path("configs/dpo.yaml")
-DEFAULT_OUTPUT_DIR = Path("outputs_dpo")
-DEFAULT_MERGED_MODEL_PATH = Path("./Qwen2.5-1.5B-DPO-merged")
+DPO_OUTPUT_DIR = OUTPUT_DIR / "dpo"
+DPO_MERGED_DIR = DPO_OUTPUT_DIR / "merged"
 
 # Custom DPO Trainer to handle log issue
 class CustomDPOTrainer(DPOTrainer):
@@ -48,9 +50,9 @@ def main():
     """메인 학습 프로세스를 실행합니다."""
     try:
         # 설정 로드
-        config = load_config(CONFIG_PATH)
-        output_dir = DEFAULT_OUTPUT_DIR
-        merged_model_path = DEFAULT_MERGED_MODEL_PATH
+        config = load_config(DPO_CONFIG_PATH)
+        output_dir = DPO_OUTPUT_DIR
+        merged_model_path = DPO_MERGED_DIR
         training_type = config["model"].get("training_type", "sft").lower()
 
         if training_type not in ["sft", "lora", "qlora"]:
