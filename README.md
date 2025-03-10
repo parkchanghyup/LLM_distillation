@@ -63,8 +63,7 @@ This script performs the following steps:
 LLM_distillation/
 ├── configs/                  # Configuration files
 │   ├── student_model.yaml    # Student model training config
-│   ├── teacher_model.yaml    # Teacher model training config
-│   ├── dpo.yaml              # DPO training config
+│   └── teacher_model.yaml    # Teacher model training config
 ├── data/                     # Data directory
 │   ├── raw/                  # Raw data
 │   ├── train/                # Training data
@@ -106,6 +105,14 @@ LLM_distillation/
 
 ### 5. Demo (src/demo/)
 - Demo application using the trained models
+
+## 💫 Future Work
+
+The following enhancements are planned for future releases:
+
+1. **Direct Preference Optimization (DPO)**: Implement DPO training to further refine model outputs based on human preferences, improving the quality and alignment of generated summaries.
+
+2. **Automatic Data Filtering**: Add intelligent data filtering capabilities to automatically identify and remove low-quality or irrelevant training examples, ensuring higher quality training data.
 
 ![img1](./images/img_1.png)
 ![img2](./images/img_2.png)
