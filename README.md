@@ -2,6 +2,11 @@
 
 This project demonstrates an efficient approach to generating training datasets using Large Language Models (LLMs) and training smaller models with these datasets. It addresses the challenge of using high-performance LLMs in resource-constrained environments by generating high-quality training data with larger models and using it to optimize smaller, more deployable models.
 
+## Demo page example
+
+![img1](./images/img_1.png)
+![img2](./images/img_2.png)
+
 ## Project Architecture
 ![Architecture](./images/architecture.png)
 
@@ -114,5 +119,4 @@ The following enhancements are planned for future releases:
 
 2. **Automatic Data Filtering**: Add intelligent data filtering capabilities to automatically identify and remove low-quality or irrelevant training examples, ensuring higher quality training data.
 
-![img1](./images/img_1.png)
-![img2](./images/img_2.png)
+
