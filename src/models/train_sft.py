@@ -3,7 +3,7 @@ from typing import Dict
 import os
 import traceback
 
-from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 
 from utils.model_utils import (
     load_model, apply_peft_config, merge_peft_model,
@@ -28,23 +28,44 @@ def setup_trainer(
     """SFTTrainer를 설정하고 반환합니다."""
     # eval_dataset이 None이면 evaluation_strategy를 "no"로 설정
     if eval_dataset is None and "training" in config:
-        config["training"]["evaluation_strategy"] = "no"
+        config["training"]["eval_strategy"] = "no"
 
     # 출력 디렉토리 생성
     os.makedirs(output_dir, exist_ok=True)
 
-    training_args = setup_training_args(config, output_dir)
+    # 훈련 설정을 SFTConfig에 맞게 변환
+    training_config = config["training"]
+
+    # SFTConfig 생성 - 키 이름을 올바르게 매핑
+    sft_config = SFTConfig(
+        output_dir=str(output_dir),
+        dataset_text_field="text",
+        dataset_num_proc=config["data"]["num_proc"],
+        max_length=config["model"]["max_seq_length"],
+        packing=False,
+        # 훈련 관련 설정들을 올바른 키 이름으로 매핑
+        per_device_train_batch_size=training_config.get("batch_size", 2),
+        gradient_accumulation_steps=training_config.get("gradient_accumulation_steps", 4),
+        warmup_steps=training_config.get("warmup_steps", 1000),
+        num_train_epochs=training_config.get("epochs", 3),
+        learning_rate=training_config.get("learning_rate", 3e-5),
+        eval_steps=training_config.get("eval_steps", 1000),
+        eval_strategy=training_config.get("eval_strategy", "steps"),
+        logging_steps=training_config.get("logging_steps", 500),
+        optim=training_config.get("optimizer", "adamw_8bit"),
+        weight_decay=training_config.get("weight_decay", 0.01),
+        lr_scheduler_type=training_config.get("lr_scheduler_type", "linear"),
+        seed=training_config.get("seed", 323),
+        save_steps=training_config.get("save_steps", 1000),
+        save_total_limit=training_config.get("save_total_limit", 3),
+    )
 
     return SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        dataset_text_field="text",
-        max_seq_length=config["model"]["max_seq_length"],
-        dataset_num_proc=config["data"]["num_proc"],
-        packing=False,
-        args=training_args,
+        processing_class=tokenizer,
+        args=sft_config,
     )
 
 
