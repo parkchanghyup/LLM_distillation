@@ -1,5 +1,5 @@
 # Core dependencies
-torc
+torch
 transformers
 peft
 accelerate
@@ -9,12 +9,15 @@ pandas
 numpy
 scikit-learn
 tqdm
+langchain
+trl
 
 # Google API
 google-generativeai
+google-genai
 
 # LLM inference
-vllm>=0.6.4
+vllm>=0.8.4
 sentencepiece
 # Configuration and utilities
 pyyaml>=6.0
