@@ -122,7 +122,7 @@ def setup_training_args(config: Dict, output_dir: Path) -> "TrainingArguments":
 
     # evaluation_strategy 설정 (config에서 직접 가져오거나 기본값 사용)
     evaluation_strategy = config["training"].get("evaluation_strategy", "no")
-    training_args["evaluation_strategy"] = evaluation_strategy
+    training_args["eval_strategy"] = evaluation_strategy
 
     if evaluation_strategy == "steps":
         training_args["eval_steps"] = config["training"].get("eval_steps", 5)
